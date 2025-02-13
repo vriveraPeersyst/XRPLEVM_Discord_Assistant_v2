@@ -19,7 +19,7 @@ echo "====================================" >> "$OUTPUT_FILE"
 # Patterns ignored: node_modules, package-lock.json, various image files, .DS_Store,
 # .git folder, abis (contract src/abis folder), and main.0d424902.js.
 tree -a \
-  -I "node_modules|package-lock.json|*.ico|*.png|*.jpg|*.jpeg|*.svg|*.gif|.DS_Store|.git|abis|main.0d424902.js" \
+  -I "docs|node_modules|package-lock.json|*.ico|*.png|*.jpg|*.jpeg|*.svg|*.gif|.DS_Store|.git|abis|main.0d424902.js" \
   . >> "$OUTPUT_FILE" 2>/dev/null
 
 #######################################
@@ -35,6 +35,7 @@ find . \
   -type f \
   \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.sh" -o -name "*.json" \) \
   -not -path "*node_modules*" \
+  -not -path "*docs*" \
   -not -name "package-lock.json" \
   -not -path "*/.git/*" \
   -not -path "*/src/abis/*" \

@@ -13,8 +13,18 @@ const commands = [
     .setDescription('Ask a question about XRPL EVM docs')
     .addStringOption(option =>
       option.setName('prompt')
-        .setDescription('Your question')
-        .setRequired(true)
+        .setDescription('Your question (optional if file provided)')
+        .setRequired(false)
+    )
+    .addAttachmentOption(option =>
+      option.setName('doc_attachment')
+        .setDescription('Upload a .txt, .md, .pdf, or .csv file containing your prompt')
+        .setRequired(false)
+    )
+    .addAttachmentOption(option =>
+      option.setName('image_attachment')
+        .setDescription('Upload an image file to extract text as prompt')
+        .setRequired(false)
     )
     .toJSON(),
 ];
