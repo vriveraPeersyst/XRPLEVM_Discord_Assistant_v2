@@ -14,6 +14,9 @@ A Discord bot that leverages OpenAI’s assistant APIs to provide dynamic, docum
 - **Discord Slash Commands**  
   Provides a `/xrplevm` command for users to ask questions about XRPL EVM documentation directly from Discord.
 
+- **Enhanced Prompt Input Support**  
+  Accepts not only text input but also file attachments. Users can attach documents (`.txt`, `.md`, `.pdf`, `.csv`) or images. Image attachments are processed with OCR (via Tesseract.js) to extract text for the prompt.
+
 - **Backup & Export Script**  
   Includes a shell script (`backup_and_export.sh`) to generate a report of the repository structure and key file contents.
 
@@ -63,6 +66,10 @@ A Discord bot that leverages OpenAI’s assistant APIs to provide dynamic, docum
    # or if you prefer yarn:
    yarn install
    ```
+
+   > **Note:** This project uses additional dependencies for file processing:
+   > - **pdf-parse** for processing PDF files
+   > - **Tesseract.js** for extracting text from images
 
 3. **Configure Environment Variables**
 
@@ -118,8 +125,11 @@ Use the slash command to ask questions about XRPL EVM docs:
 /xrplevm prompt:"Your question about XRPL EVM"
 ```
 
-- The bot processes your query via the assistant.
-- If the response is too long, it will be sent as an attached text file.
+You can also attach a file or image to supply additional context:
+- **Document Attachment:** Attach a `.txt`, `.md`, `.pdf`, or `.csv` file containing your query or extra details.
+- **Image Attachment:** Attach an image file; the bot will extract text from the image using OCR before processing your prompt.
+
+If the bot's response is too long, it will be sent as an attached text file.
 
 ### Backup & Export
 
