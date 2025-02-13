@@ -1,4 +1,4 @@
-```markdown
+
 # XRPL EVM Discord Docs Assistant
 
 A Discord bot that leverages OpenAI’s assistant APIs to provide dynamic, documentation-driven help for XRPL EVM. The bot periodically pulls and updates documentation from a GitHub repository, processes Markdown files into plain text, uploads them to a vector store, and powers an assistant that responds to user queries via Discord slash commands.
@@ -164,4 +164,3 @@ Feel free to modify the `.gitignore` as needed.
 ---
 
 Happy coding and enjoy exploring XRPL EVM docs with your new Discord assistant!
-```
