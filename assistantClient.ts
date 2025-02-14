@@ -59,9 +59,9 @@ export async function addFileToVectorStore(vectorStoreId: string, fileId: string
 export async function createOrUpdateAssistantWithVectorStore(vectorStoreId: string): Promise<any> {
   const payload = {
     name: "XRPL EVM Docs Assistant",
-    description: "Provides help and examples from the XRPL EVM documentation.",
+    description: "Provides help to xrplevm users, developers and operators and examples from the XRPL EVM documentation.",
     model: "gpt-4o-mini", // or your chosen model
-    instructions: "You are an expert in XRPL EVM documentation. Answer questions clearly and with reference to the docs.",
+    instructions: "You are an expert in XRPL EVM documentation. Answer questions clearly and with reference links to the docs, but do not include any source annotations or citations in your response. If the question has a stright up answer reply concise and try not exceeding 1900 characters.",
     // Use the file_search tool (instead of code_interpreter) to search through many files
     tools: [{ type: "file_search" }],
     tool_resources: {

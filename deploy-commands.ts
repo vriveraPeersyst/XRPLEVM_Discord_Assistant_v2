@@ -12,7 +12,7 @@ const commands = [
     .setName('xrplevm')
     .setDescription('Ask a question about XRPL EVM docs')
     .addStringOption(option =>
-      option.setName('prompt')
+      option.setName('text')
         .setDescription('Your question (optional if file provided)')
         .setRequired(false)
     )

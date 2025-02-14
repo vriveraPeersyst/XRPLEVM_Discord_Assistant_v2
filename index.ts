@@ -2,7 +2,6 @@
 import {
   Client,
   GatewayIntentBits,
-  Interaction,
   AttachmentBuilder,
   Attachment
 } from 'discord.js';
@@ -22,16 +21,21 @@ import pdf from 'pdf-parse';
 dotenv.config();
 
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
-const TARGET_CHANNEL_ID = process.env.TARGET_CHANNEL_ID; // The channel where the bot should respond
 
-// Create Discord client
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+// Create a Discord client with the necessary intents, including MessageContent.
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent, // Needed to read message content
+  ]
+});
 
 // Global variable to hold your Assistant's ID.
 let assistantId: string;
 
 /**
- * Extract text from a document attachment (.txt, .md, .pdf, .csv)
+ * Extracts text from a document attachment (.txt, .md, .pdf, .csv).
  */
 async function extractTextFromDocAttachment(attachment: Attachment): Promise<string> {
   const fileName = attachment.name?.toLowerCase() || "";
@@ -58,14 +62,16 @@ async function extractTextFromDocAttachment(attachment: Attachment): Promise<str
   }
 }
 
-// Function to update docs and (re)create the Assistant using a vector store.
+/**
+ * Updates the documentation and creates/updates the Assistant using a vector store.
+ */
 async function updateAssistantDocs() {
   console.log('Updating docs from GitHub...');
   await updateDocsRepo();
   const txtFiles = convertMdToTxt();
   console.log('Converted files:', txtFiles);
 
-  // Upload files one by one and gather file IDs.
+  // Upload each file and gather their file IDs.
   const fileIds: string[] = [];
   for (const filePath of txtFiles) {
     try {
@@ -107,91 +113,84 @@ async function updateAssistantDocs() {
   }
 }
 
-// Handle Discord slash commands
-client.on('interactionCreate', async (interaction: Interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+/**
+ * Listens for messages starting with the prefix and processes the !xrplevm command.
+ */
+client.on('messageCreate', async (message) => {
+  // Ignore messages from bots.
+  if (message.author.bot) return;
 
-  // Ensure the command is used in the designated channel if specified.
-  if (TARGET_CHANNEL_ID && interaction.channelId !== TARGET_CHANNEL_ID) {
-    return interaction.reply({
-      content: 'This command cannot be used in this channel.',
-      ephemeral: true
-    });
-  }
+  const prefix = '!';
+  if (!message.content.startsWith(prefix)) return;
 
-  if (interaction.commandName === 'xrplevm') {
-    // Immediately defer the reply to prevent the interaction from expiring.
-    await interaction.deferReply({ ephemeral: true });
+  // Parse the command and its arguments.
+  const args = message.content.slice(prefix.length).trim().split(/\s+/);
+  const command = args.shift()?.toLowerCase();
 
-    // Retrieve prompt text (if provided)
-    const promptText = interaction.options.getString('prompt') || '';
-
-    // Retrieve document and image attachments (if provided)
-    const docAttachment = interaction.options.getAttachment('doc_attachment');
-    const imageAttachment = interaction.options.getAttachment('image_attachment');
-
+  if (command === 'xrplevm') {
+    let promptText = args.join(' ');
     let attachmentText = '';
 
-    // Process document attachment (.txt, .md, .pdf, .csv)
-    if (docAttachment) {
-      attachmentText += '\n' + (await extractTextFromDocAttachment(docAttachment));
-    }
+    // Process any attachments.
+    if (message.attachments.size > 0) {
+      for (const attachment of message.attachments.values()) {
+        const fileName = attachment.name?.toLowerCase() || '';
+        const supportedDocExtensions = ['.txt', '.md', '.pdf', '.csv'];
+        const supportedImageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
 
-    // Process image attachment with OCR
-    if (imageAttachment) {
-      const supportedImageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
-      if (
-        imageAttachment.name &&
-        supportedImageExtensions.some(ext => imageAttachment.name!.toLowerCase().endsWith(ext))
-      ) {
-        try {
-          const imageResponse = await axios.get(imageAttachment.url, { responseType: 'arraybuffer' });
-          const imageBuffer = Buffer.from(imageResponse.data, 'binary');
-          const { data: { text } } = await Tesseract.recognize(imageBuffer, 'eng');
-          attachmentText += '\n' + text;
-        } catch (error) {
-          console.error('Error processing image attachment for OCR:', error);
+        if (supportedDocExtensions.some(ext => fileName.endsWith(ext))) {
+          attachmentText += '\n' + (await extractTextFromDocAttachment(attachment));
+        } else if (supportedImageExtensions.some(ext => fileName.endsWith(ext))) {
+          try {
+            const imageResponse = await axios.get(attachment.url, { responseType: 'arraybuffer' });
+            const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+            const { data: { text } } = await Tesseract.recognize(imageBuffer, 'eng');
+            attachmentText += '\n' + text;
+          } catch (error) {
+            console.error('Error processing image attachment for OCR:', error);
+          }
+        } else {
+          console.error('Unsupported attachment file type:', fileName);
         }
-      } else {
-        console.error('The provided image attachment is not a supported image file');
       }
     }
 
-    // Combine text from the prompt and any attachment text.
     const finalPrompt = (promptText + '\n' + attachmentText).trim();
 
     if (!finalPrompt) {
-      return interaction.editReply('Please provide a prompt text, a document file, or an image with text.');
+      return message.reply('Please provide some text or attach a file/image with text.');
     }
 
     try {
       // Run the conversation with the Assistant.
       const answer = await runAssistantConversation(assistantId, finalPrompt);
-
-      // If the answer is too long, attach it as a .txt file.
-      if (answer.length > 1900) {
-        const buffer = Buffer.from(answer, 'utf-8');
-        const attachment = new AttachmentBuilder(buffer, { name: 'response.txt' });
-        await interaction.editReply({
+    
+      // Remove any source references like "【...†source】"
+      const cleanedAnswer = answer.replace(/【.*?†source】/g, '');
+    
+      // If the answer is too long, send it as a file attachment.
+      if (cleanedAnswer.length > 1900) {
+        const buffer = Buffer.from(cleanedAnswer, 'utf-8');
+        const fileAttachment = new AttachmentBuilder(buffer, { name: 'response.md' });
+        await message.reply({
           content: 'The response is too long; please see the attached file:',
-          files: [attachment]
+          files: [fileAttachment]
         });
       } else {
-        await interaction.editReply({ content: answer });
+        await message.reply(cleanedAnswer);
       }
-    } catch (err) {
-      console.error('Error running Assistant conversation:', err);
-      await interaction.editReply('There was an error processing your request.');
+    } catch (error) {
+      console.error('Error running assistant conversation:', error);
+      await message.reply('There was an error processing your request. Please try again later.');
     }
   }
 });
 
-// Log in to Discord and update docs on startup.
+// On startup, log in and update the Assistant docs.
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user?.tag}`);
   await updateAssistantDocs();
-
-  // Optionally, update docs and the Assistant at regular intervals (e.g., hourly).
+  // Optionally, update docs at regular intervals (e.g., hourly)
   setInterval(updateAssistantDocs, 60 * 60 * 1000);
 });
 
