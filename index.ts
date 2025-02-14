@@ -121,7 +121,15 @@ async function updateAssistantDocs() {
  * Process user input (message content + attachments).
  */
 async function processInput(message: any, args: string[]): Promise<string> {
-  let promptText = args.join(' ');
+  console.log(`📝 Processing message from: ${message.author.tag}`);
+  console.log(`📌 Raw Message Content: "${message.content}"`);
+  console.log(`📎 Attachments count: ${message.attachments.size}`);
+
+  // **Fix: Use message.content when args are empty**
+  let promptText = args.length > 0 ? args.join(' ') : message.content.trim();
+  
+  console.log(`📖 After Args Join: "${promptText}"`);
+
   let attachmentText = '';
 
   if (message.attachments.size > 0) {
@@ -131,8 +139,10 @@ async function processInput(message: any, args: string[]): Promise<string> {
       const supportedImageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
 
       if (supportedDocExtensions.some(ext => fileName.endsWith(ext))) {
+        console.log(`📖 Processing document: ${fileName}`);
         attachmentText += '\n' + (await extractTextFromDocAttachment(attachment));
       } else if (supportedImageExtensions.some(ext => fileName.endsWith(ext))) {
+        console.log(`🖼️ Processing image: ${fileName}`);
         try {
           const imageResponse = await axios.get(attachment.url, { responseType: 'arraybuffer' });
           const imageBuffer = Buffer.from(imageResponse.data, 'binary');
@@ -142,13 +152,19 @@ async function processInput(message: any, args: string[]): Promise<string> {
           console.error('Error processing image attachment for OCR:', error);
         }
       } else {
-        console.error('Unsupported attachment file type:', fileName);
+        console.error(`⚠️ Unsupported attachment file type: ${fileName}`);
       }
     }
   }
 
-  return (promptText + '\n' + attachmentText).trim();
+  const finalInput = (promptText + '\n' + attachmentText).trim();
+  
+  console.log(`🔎 Final processed input: "${finalInput}"`);
+  
+  return finalInput;
 }
+
+
 
 /**
  * Stateless command: !xrplevm
@@ -217,91 +233,104 @@ async function handleThreadCommand(message: any, args: string[], isPrivate: bool
   }
 
   await handleOngoingThreadMessage(thread, finalPrompt, message);
-}
+} 
 
-/**
- * Handle ongoing conversation in a thread, with "branching" if the user replies to an older message.
- * If user replies to an older message, ignore all messages after that one in the timeline.
- */
 async function handleOngoingThreadMessage(
   thread: ThreadChannel,
   newUserPrompt: string,
   originalMessage: any
 ) {
-  let conversationMessages: { role: string; content: string }[] = [];
+    console.log(`🔄 Entered handleOngoingThreadMessage for thread: ${thread.name}`);
 
-  // If the user is replying to an older message, we want to ignore any messages posted after that.
-  let cutoffTime = Infinity;
-  const replyId = originalMessage.reference?.messageId;
-  if (replyId) {
+    let conversationMessages: { role: string; content: string }[] = [];
+
+    // If the user is replying to an older message, ignore newer messages.
+    let cutoffTime = Infinity;
+    const replyId = originalMessage.reference?.messageId;
+    if (replyId) {
+      try {
+        const repliedTo = await thread.messages.fetch(replyId);
+        cutoffTime = repliedTo.createdTimestamp;
+        console.log(`📌 Reply detected, ignoring messages after: ${cutoffTime}`);
+      } catch (error) {
+        console.warn("⚠️ Could not fetch replied-to message. Proceeding without cutoff.");
+      }
+    }
+
+    console.log(`📥 Fetching messages from thread: ${thread.name}`);
+
     try {
-      const repliedTo = await thread.messages.fetch(replyId);
-      cutoffTime = repliedTo.createdTimestamp;
+      const fetchedMessages = await thread.messages.fetch({ limit: 100 });
+      console.log(`📑 Total messages fetched: ${fetchedMessages.size}`);
+
+      const sortedMessages = Array.from(fetchedMessages.values()).sort(
+        (a, b) => a.createdTimestamp - b.createdTimestamp
+      );
+
+      conversationMessages = sortedMessages
+        .filter((m) => {
+          if (m.createdTimestamp > cutoffTime) return false;
+          if (![MessageType.Default, MessageType.Reply].includes(m.type)) return false;
+          if (!m.content || !m.content.trim()) return false;
+          return true;
+        })
+        .map((m) => {
+          const role = m.author.bot ? "assistant" : "user";
+          console.log(`📌 Processing message: "${m.content}" (Role: ${role})`);
+          return { role, content: m.content.trim() };
+        });
+
     } catch (error) {
-      console.warn('Could not fetch replied-to message. Proceeding without cutoff.');
+      console.error(`❌ Error fetching messages from thread:`, error);
+    }
+
+    console.log(`📤 Sending new user input to assistant: "${newUserPrompt}"`);
+
+    conversationMessages.push({ role: "user", content: newUserPrompt });
+
+    try {
+      let answer = await runAssistantConversation(assistantId, conversationMessages);
+      answer = answer.replace(/【.*?†source】/g, "");
+      console.log(`✅ Assistant response received.`);
+
+      if (answer.length > 1900) {
+        const buffer = Buffer.from(answer, "utf-8");
+        const fileAttachment = new AttachmentBuilder(buffer, { name: "response.txt" });
+        await thread.send({
+          content: "The response is too long; please see the attached file:",
+          files: [fileAttachment],
+        });
+      } else {
+        await thread.send(answer);
+      }
+    } catch (error) {
+      console.error("❌ Error running assistant conversation:", error);
+      await thread.send("There was an error processing your request. Please try again later.");
     }
   }
 
-  try {
-    const fetchedMessages = await thread.messages.fetch({ limit: 100 });
-    const sortedMessages = Array.from(fetchedMessages.values()).sort(
-      (a, b) => a.createdTimestamp - b.createdTimestamp
-    );
 
-    conversationMessages = sortedMessages
-      .filter((m) => {
-        // 1) If there's a cutoffTime, ignore messages that come after that
-        if (m.createdTimestamp > cutoffTime) return false;
 
-        // 2) Allow both normal text messages AND replies
-        //    (MessageType.Default = 0, MessageType.Reply = 19, etc.)
-        if (![MessageType.Default, MessageType.Reply].includes(m.type)) return false;
-
-        // 3) Exclude empty or whitespace-only messages
-        if (!m.content || !m.content.trim()) return false;
-
-        return true;
-      })
-      .map((m) => {
-        const role = m.author.bot ? 'assistant' : 'user';
-        return { role, content: m.content.trim() };
-      });
-  } catch (error) {
-    console.error('Error fetching conversation history:', error);
-  }
-
-  // Always add the user's latest prompt as the final message
-  conversationMessages.push({ role: 'user', content: newUserPrompt });
-
-  try {
-    let answer = await runAssistantConversation(assistantId, conversationMessages);
-    answer = answer.replace(/【.*?†source】/g, '');
-    if (answer.length > 1900) {
-      const buffer = Buffer.from(answer, 'utf-8');
-      const fileAttachment = new AttachmentBuilder(buffer, { name: 'response.txt' });
-      await thread.send({
-        content: 'The response is too long; please see the attached file:',
-        files: [fileAttachment],
-      });
-    } else {
-      await thread.send(answer);
-    }
-  } catch (error) {
-    console.error('Error running assistant conversation:', error);
-    await thread.send('There was an error processing your request. Please try again later.');
-  }
-}
 
 /**
  * Handle automatic replies when users type in an existing XRPL EVM conversation thread,
  * without requiring a command prefix.
  */
 async function handleAutoThreadMessage(message: any) {
+  console.log(`🔄 Entered handleAutoThreadMessage for thread: ${message.channel.name}`);
+
   const newUserPrompt = await processInput(message, []);
-  if (!newUserPrompt) return; // Nothing to process
+  if (!newUserPrompt) {
+    console.log(`⚠️ No valid input detected in handleAutoThreadMessage.`);
+    return;
+  }
+
+  console.log(`📨 User prompt detected: "${newUserPrompt}"`);
+
   const thread = message.channel as ThreadChannel;
   await handleOngoingThreadMessage(thread, newUserPrompt, message);
 }
+
 
 // Listen for messages to handle commands or auto thread replies.
 client.on('messageCreate', async (message) => {
