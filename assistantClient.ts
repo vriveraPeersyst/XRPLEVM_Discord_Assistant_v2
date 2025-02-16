@@ -11,6 +11,41 @@ const ASSISTANT_FILES_API_BASE = process.env.ASSISTANT_FILES_API_BASE!; // e.g. 
 axios.defaults.headers.common['Authorization'] = `Bearer ${OPENAI_API_KEY}`;
 axios.defaults.headers.common['OpenAI-Beta'] = 'assistants=v2';
 
+/**
+ * Retry a promise-returning function a number of times with a delay.
+ * @param fn The async function to execute.
+ * @param maxAttempts Maximum number of attempts (default: 3).
+ * @param delay Delay in milliseconds between attempts (default: 2000).
+ */
+async function retry<T>(
+  fn: () => Promise<T>,
+  context: string,
+  maxAttempts = 3,
+  delay = 2000
+): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (error: unknown) {
+      attempt++;
+      if (axios.isAxiosError(error)) {
+        console.error(
+          `Attempt ${attempt} failed for ${context}:`,
+          error.response?.data || error.message
+        );
+      } else {
+        console.error(`Attempt ${attempt} failed for ${context}:`, error);
+      }
+      if (attempt >= maxAttempts) {
+        throw error;
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
+
 // -----------------
 // File Upload Function
 // -----------------
@@ -19,10 +54,12 @@ export async function uploadFile(filePath: string): Promise<any> {
   form.append('file', fs.createReadStream(filePath));
   form.append('purpose', 'assistants');
 
-  const response = await axios.post(`${ASSISTANT_FILES_API_BASE}`, form, {
-    headers: form.getHeaders(),
-  });
-  return response.data;
+  return await retry(async () => {
+    const response = await axios.post(`${ASSISTANT_FILES_API_BASE}`, form, {
+      headers: form.getHeaders(),
+    });
+    return response.data;
+  }, `Uploading file at ${filePath}`);
 }
 
 // -----------------
@@ -34,23 +71,26 @@ export async function createVectorStore(storeName: string): Promise<string> {
     // You can include additional settings if desired.
   };
 
-  const response = await axios.post(
-    'https://api.openai.com/v1/vector_stores',
-    payload,
-    { headers: { 'Content-Type': 'application/json' } }
-  );
-  // Return the vector store ID (e.g. "vs_abc123")
-  return response.data.id;
+  return await retry(async () => {
+    const response = await axios.post(
+      'https://api.openai.com/v1/vector_stores',
+      payload,
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response.data.id;
+  }, `Creating vector store "${storeName}"`);
 }
 
 export async function addFileToVectorStore(vectorStoreId: string, fileId: string): Promise<any> {
   const payload = { file_id: fileId };
-  const response = await axios.post(
-    `https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`,
-    payload,
-    { headers: { 'Content-Type': 'application/json' } }
-  );
-  return response.data;
+  return await retry(async () => {
+    const response = await axios.post(
+      `https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`,
+      payload,
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response.data;
+  }, `Adding file id ${fileId} to vector store ${vectorStoreId}`);
 }
 
 // -----------------
@@ -75,12 +115,14 @@ export async function createOrUpdateAssistantWithVectorStore(vectorStoreId: stri
     response_format: "auto"
   };
 
-  const response = await axios.post(
-    `${ASSISTANT_API_BASE}`,
-    payload,
-    { headers: { 'Content-Type': 'application/json' } }
-  );
-  return response.data;
+  return await retry(async () => {
+    const response = await axios.post(
+      `${ASSISTANT_API_BASE}`,
+      payload,
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response.data;
+  }, `Creating/updating assistant with vector store ${vectorStoreId}`);
 }
 
 // -----------------
