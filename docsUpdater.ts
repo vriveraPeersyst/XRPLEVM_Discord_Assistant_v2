@@ -28,16 +28,25 @@ export async function updateDocsRepo(): Promise<void> {
 
   // Optionally: retrieve the latest tag using GitHub API.
   try {
-    const tagsRes = await axios.get(`https://api.github.com/repos/ripple/docs.xrplevm.org/tags`);
-    const latestTag = tagsRes.data[0].name;
-    console.log(`Latest tag found: ${latestTag}`);
-
-    // Check out the latest tag locally
-    const repo = simpleGit(localPath);
-    await repo.checkout(latestTag);
+    const tagsRes = await axios.get(
+      `https://api.github.com/repos/ripple/docs.xrplevm.org/tags`,
+      { headers: { Authorization: '' } } // overrides any global default
+    );
+  
+    if (Array.isArray(tagsRes.data) && tagsRes.data.length > 0) {
+      const latestTag = tagsRes.data[0].name;
+      console.log(`Latest tag found: ${latestTag}`);
+  
+      // Check out the latest tag locally
+      const repo = simpleGit(localPath);
+      await repo.checkout(latestTag);
+    } else {
+      console.log('No tags found, using the current branch.');
+    }
   } catch (err) {
     console.error('Error fetching latest tag, using current branch:', err);
   }
+  
 }
 
 export function convertMdToTxt(): string[] {
