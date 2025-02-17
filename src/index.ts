@@ -95,7 +95,7 @@ async function updateAssistantDocs() {
   // Create a vector store for the files.
   let vectorStoreId: string;
   try {
-    vectorStoreId = await createVectorStore("XRPL Docs Vector Store");
+    vectorStoreId = await createVectorStore("Nervos Docs Vector Store");
     console.log("Created vector store with ID:", vectorStoreId);
   } catch (err) {
     console.error("Error creating vector store:", err);
@@ -171,7 +171,7 @@ async function processInput(message: any, args: string[]): Promise<string> {
 
 
 /**
- * Stateless command: !xrplevm
+ * Stateless command: !askbull
  * Single-message conversation (no thread).
  */
 async function handleStatelessCommand(message: any, args: string[]) {
@@ -235,10 +235,10 @@ async function handleThreadCommand(message: any, args: string[], isPrivate: bool
     try {
       const threadOptions: any = {
         name: isPrivate
-          ? `XRPL EVM Private Conversation`
-          : `XRPL EVM Conversation`,
+          ? `askBull Private Conversation`
+          : `askBull Conversation`,
         autoArchiveDuration: 60,
-        reason: 'Conversation with XRPL EVM assistant',
+        reason: 'Conversation with CKBull assistant',
       };
       if (isPrivate) {
         threadOptions.type = ChannelType.GuildPrivateThread;
@@ -442,8 +442,8 @@ client.on('messageCreate', async (message) => {
 
     // If the thread name indicates an XRPL EVM conversation
     if (
-      thread.name.includes('XRPL EVM Conversation') ||
-      thread.name.includes('XRPL EVM Private Conversation')
+      thread.name.includes('askBull Conversation') ||
+      thread.name.includes('askBull Private Conversation')
     ) {
       // If the message does NOT start with "!", auto-handle as a thread message
       if (!message.content.trim().startsWith('!')) {
@@ -464,14 +464,14 @@ client.on('messageCreate', async (message) => {
 
   console.log(`🔹 Processing command: "${command}" from ${message.author.tag}`);
 
-  if (command === 'xrplevm') {
+  if (command === 'askbull') {
     // Stateless command
     await handleStatelessCommand(message, args);
     // (handleStatelessCommand will store conversation keyed by bot message ID)
-  } else if (command === 'xrplevmthread') {
+  } else if (command === 'askbullthread') {
     // Public thread-based conversation
     await handleThreadCommand(message, args, false);
-  } else if (command === 'xrplevmprivatethread') {
+  } else if (command === 'askbullprivatethread') {
     // Private thread-based conversation
     await handleThreadCommand(message, args, true);
   }

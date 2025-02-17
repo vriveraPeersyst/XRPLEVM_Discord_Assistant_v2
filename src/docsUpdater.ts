@@ -29,7 +29,7 @@ export async function updateDocsRepo(): Promise<void> {
   // Optionally: retrieve the latest tag using GitHub API.
   try {
     const tagsRes = await axios.get(
-      `https://api.github.com/repos/ripple/docs.xrplevm.org/tags`,
+      `https://github.com/nervosnetwork/docs.nervos.org/tags`,
       { headers: { Authorization: '' } } // overrides any global default
     );
   
