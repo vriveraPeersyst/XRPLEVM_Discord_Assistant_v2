@@ -38,6 +38,11 @@ const client = new Client({
 // Global variable to hold your Assistant's ID.
 let assistantId: string;
 
+// Stores conversation arrays keyed by the bot's own message ID
+// so we can pick up context when the user replies to that message.
+const statelessConversations = new Map<string, { role: string; content: string }[]>();
+
+
 /**
  * Extract text from a document attachment (.txt, .md, .pdf, .csv)
  */
@@ -175,27 +180,48 @@ async function handleStatelessCommand(message: any, args: string[]) {
     await message.reply('Please provide some text or attach a file/image with text.');
     return;
   }
-  // Single-message conversation.
-  const conversationMessages = [{ role: 'user', content: finalPrompt }];
+
+  // Single-message conversation so far
+  let conversationMessages = [{ role: 'user', content: finalPrompt }];
+
   try {
     let answer = await runAssistantConversation(assistantId, conversationMessages);
     // Remove any source annotations.
     answer = answer.replace(/【.*?†source】/g, '');
+
+    // If the answer is too big for a normal message, attach as a file
     if (answer.length > 1900) {
       const buffer = Buffer.from(answer, 'utf-8');
       const fileAttachment = new AttachmentBuilder(buffer, { name: 'response.txt' });
-      await message.reply({
+      
+      // Send the bot reply
+      const botReply = await message.reply({
         content: 'The response is too long; please see the attached file:',
-        files: [fileAttachment]
+        files: [fileAttachment],
       });
+
+      // Add the assistant's final message to the conversation
+      conversationMessages.push({ role: 'assistant', content: answer });
+
+      // Store this entire conversation by the bot’s message ID
+      statelessConversations.set(botReply.id, conversationMessages);
+
     } else {
-      await message.reply(answer);
+      // Send a normal text reply
+      const botReply = await message.reply(answer);
+
+      // Add the assistant's final message to the conversation
+      conversationMessages.push({ role: 'assistant', content: answer });
+
+      // Store in the Map
+      statelessConversations.set(botReply.id, conversationMessages);
     }
   } catch (error) {
     console.error('Error running assistant conversation:', error);
     await message.reply('There was an error processing your request. Please try again later.');
   }
 }
+
 
 /**
  * Thread-based commands (public or private).
@@ -340,28 +366,86 @@ async function handleAutoThreadMessage(message: any) {
 }
 
 
-// Listen for messages to handle commands or auto thread replies.
 client.on('messageCreate', async (message) => {
-  // Ignore messages from bots (including self).
+  // 1) Ignore messages from bots
   if (message.author.bot) return;
 
-  // Ensure message.channel is valid
-  if (!message.channel) {
-    console.warn(`⚠️ Message received but channel is undefined.`);
-    return;
+  // 2) Check if message is a reply to a bot's stateless message
+  if (message.reference?.messageId) {
+    const originalBotMsgId = message.reference.messageId;
+    // If we have a conversation stored under that bot message ID, continue stateless conversation
+    if (statelessConversations.has(originalBotMsgId)) {
+      console.log(
+        `↪️ User is replying to a stateless bot message: ${originalBotMsgId}`
+      );
+
+      const conversation = statelessConversations.get(originalBotMsgId)!;
+
+      // Process user input (including attachments)
+      const userPrompt = await processInput(message, []);
+      if (!userPrompt) {
+        console.log('⚠️ No valid input in user reply.');
+        return;
+      }
+
+      // Add user message to the conversation
+      conversation.push({ role: 'user', content: userPrompt });
+
+      try {
+        // Run the updated conversation with the assistant
+        let answer = await runAssistantConversation(assistantId, conversation);
+        answer = answer.replace(/【.*?†source】/g, '');
+
+        // Send a new bot reply
+        if (answer.length > 1900) {
+          const buffer = Buffer.from(answer, 'utf-8');
+          const fileAttachment = new AttachmentBuilder(buffer, {
+            name: 'response.txt',
+          });
+          const botReply = await message.reply({
+            content: 'The response is too long; please see the attached file:',
+            files: [fileAttachment],
+          });
+
+          // Add assistant's new message
+          conversation.push({ role: 'assistant', content: answer });
+
+          // Update statelessConversations with the new message ID as the key
+          statelessConversations.delete(originalBotMsgId);
+          statelessConversations.set(botReply.id, conversation);
+        } else {
+          const botReply = await message.reply(answer);
+
+          // Add assistant's new message
+          conversation.push({ role: 'assistant', content: answer });
+
+          // Update statelessConversations with the new message ID
+          statelessConversations.delete(originalBotMsgId);
+          statelessConversations.set(botReply.id, conversation);
+        }
+      } catch (error) {
+        console.error('Error running assistant conversation (reply):', error);
+        await message.reply(
+          'There was an error processing your reply. Please try again later.'
+        );
+      }
+      return; // End early, no further checks needed
+    }
   }
 
-  // Check if it's inside a thread
+  // 3) Check if message is in a thread
   if (message.channel.isThread()) {
     const thread = message.channel as ThreadChannel;
-    console.log(`📌 Received message inside thread: "${thread.name}" from ${message.author.tag}`);
+    console.log(
+      `📌 Received message inside thread: "${thread.name}" from ${message.author.tag}`
+    );
 
-    // If the thread name matches our XRPL EVM conversation format
+    // If the thread name indicates an XRPL EVM conversation
     if (
       thread.name.includes('XRPL EVM Conversation') ||
       thread.name.includes('XRPL EVM Private Conversation')
     ) {
-      // If the message does NOT start with "!", handle it automatically
+      // If the message does NOT start with "!", auto-handle as a thread message
       if (!message.content.trim().startsWith('!')) {
         console.log(`📝 Auto-handling message in thread: ${thread.name}`);
         await handleAutoThreadMessage(message);
@@ -370,7 +454,7 @@ client.on('messageCreate', async (message) => {
     }
   }
 
-  // Otherwise, parse prefix commands
+  // 4) Check for prefix-based commands
   const prefix = '!';
   if (!message.content.startsWith(prefix)) return;
 
@@ -383,6 +467,7 @@ client.on('messageCreate', async (message) => {
   if (command === 'xrplevm') {
     // Stateless command
     await handleStatelessCommand(message, args);
+    // (handleStatelessCommand will store conversation keyed by bot message ID)
   } else if (command === 'xrplevmthread') {
     // Public thread-based conversation
     await handleThreadCommand(message, args, false);
