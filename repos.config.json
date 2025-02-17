@@ -1,0 +1,17 @@
+{
+    "repos": [
+      {
+        "name": "nervos-docs",
+        "url": "https://github.com/nervosnetwork/docs"
+      },
+      {
+        "name": "btc-docs",
+        "url": "https://github.com/bitcoin/bips"
+      },
+      {
+        "name": "lightning-docs",
+        "url": "https://github.com/lightningnetwork/lightning-rfc"
+      }
+    ]
+  }
+  

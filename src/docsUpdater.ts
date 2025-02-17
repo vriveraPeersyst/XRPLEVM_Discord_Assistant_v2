@@ -1,80 +1,73 @@
-// docsUpdater.ts
+// src/docsUpdater.ts
 import simpleGit from 'simple-git';
 import fs from 'fs';
 import path from 'path';
-import axios from 'axios';
+import { execSync } from 'child_process';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const repoUrl = process.env.GITHUB_REPO || '';
-const localPath = process.env.DOCS_LOCAL_PATH || './docs';
+// We'll import the config file (JSON) that lists the repos:
+import reposConfig from '../repos.config.json';
+// ^ Adjust the relative path if needed
 
-console.log('Repo URL:', repoUrl);
-console.log('Local Path:', localPath);
+const localManualFolder = path.join(__dirname, '..', 'ManualFolder');
 
-export async function updateDocsRepo(): Promise<void> {
-  const git = simpleGit();
-
-  // If the repo already exists locally, pull the latest changes.
-  if (fs.existsSync(localPath)) {
-    const repo = simpleGit(localPath);
-    console.log('Pulling latest changes...');
-    await repo.fetch();
-    await repo.pull();
-  } else {
-    console.log('Cloning repository...');
-    await git.clone(repoUrl, localPath);
-  }
-
-  // Optionally: retrieve the latest tag using GitHub API.
-  try {
-    const tagsRes = await axios.get(
-      `https://github.com/nervosnetwork/docs.nervos.org/tags`,
-      { headers: { Authorization: '' } } // overrides any global default
-    );
-  
-    if (Array.isArray(tagsRes.data) && tagsRes.data.length > 0) {
-      const latestTag = tagsRes.data[0].name;
-      console.log(`Latest tag found: ${latestTag}`);
-  
-      // Check out the latest tag locally
-      const repo = simpleGit(localPath);
-      await repo.checkout(latestTag);
-    } else {
-      console.log('No tags found, using the current branch.');
-    }
-  } catch (err) {
-    console.error('Error fetching latest tag, using current branch:', err);
-  }
-  
+// Ensure we have a local folder to store manual docs and cloned repos
+if (!fs.existsSync(localManualFolder)) {
+  fs.mkdirSync(localManualFolder, { recursive: true });
 }
 
-export function convertMdToTxt(): string[] {
-  const txtFiles: string[] = [];
+/**
+ * 1) Clone or pull all repos listed in repos.config.json
+ */
+export async function updateDocsRepos(): Promise<void> {
+  const git = simpleGit();
+  
+  for (const repo of reposConfig.repos) {
+    // e.g. name="nervos-docs", url="https://github.com/nervosnetwork/docs"
+    const targetPath = path.join(localManualFolder, 'github', repo.name);
+    if (!fs.existsSync(targetPath)) {
+      console.log(`Cloning ${repo.url} into ${targetPath}...`);
+      await git.clone(repo.url, targetPath);
+    } else {
+      console.log(`Pulling latest changes for ${repo.url} in ${targetPath}...`);
+      await git.cwd(targetPath).pull();
+    }
+  }
+}
 
-  // Recursively find all .md files in the localPath
-  function processDir(dir: string) {
+/**
+ * 2) Convert Markdown files to plain text in the entire ManualFolder
+ *    This covers all cloned repos plus any subfolders you manually put in "ManualFolder".
+ */
+export function convertAllMdToTxt(): string[] {
+  const convertedFiles: string[] = [];
+
+  const walkDir = (dir: string) => {
     const files = fs.readdirSync(dir);
     for (const file of files) {
       const fullPath = path.join(dir, file);
       const stat = fs.statSync(fullPath);
-      if (stat.isDirectory()) {
-        processDir(fullPath);
-      } else if (file.endsWith('.md')) {
-        const content = fs.readFileSync(fullPath, 'utf-8');
 
-        // Basic conversion: remove Markdown syntax or simply keep content
-        // (You can improve this conversion as needed)
-        const plainText = content.replace(/[#_*`~>+-]/g, '');
-        
-        // Write a .txt version next to the .md file or in a separate folder
-        const txtFilePath = fullPath.replace(/\.md$/, '.txt');
-        fs.writeFileSync(txtFilePath, plainText, 'utf-8');
-        txtFiles.push(txtFilePath);
+      if (stat.isDirectory()) {
+        walkDir(fullPath);
+      } else if (file.toLowerCase().endsWith('.md')) {
+        // Read .md content
+        const mdContent = fs.readFileSync(fullPath, 'utf-8');
+        // Basic cleanup or advanced MD->text conversion
+        const txtContent = mdContent
+          .replace(/```[\s\S]*?```/g, '') // remove code blocks
+          .replace(/[#>*_]/g, '')         // remove some MD formatting chars
+          .trim();
+
+        // Save side-by-side as .txt
+        const txtPath = fullPath.replace(/\.md$/, '.txt');
+        fs.writeFileSync(txtPath, txtContent, 'utf-8');
+        convertedFiles.push(txtPath);
       }
     }
-  }
+  };
 
-  processDir(localPath);
-  return txtFiles;
+  walkDir(localManualFolder);
+  return convertedFiles;
 }
