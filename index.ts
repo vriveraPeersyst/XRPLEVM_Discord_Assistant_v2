@@ -125,7 +125,7 @@ async function processInput(message: any, args: string[]): Promise<string> {
   console.log(`📌 Raw Message Content: "${message.content}"`);
   console.log(`📎 Attachments count: ${message.attachments.size}`);
 
-  // **Fix: Use message.content when args are empty**
+  // Use message.content when args are empty
   let promptText = args.length > 0 ? args.join(' ') : message.content.trim();
   
   console.log(`📖 After Args Join: "${promptText}"`);
@@ -163,7 +163,6 @@ async function processInput(message: any, args: string[]): Promise<string> {
   
   return finalInput;
 }
-
 
 
 /**
@@ -235,81 +234,90 @@ async function handleThreadCommand(message: any, args: string[], isPrivate: bool
   await handleOngoingThreadMessage(thread, finalPrompt, message);
 } 
 
+
+/**
+ * Gather full conversation in the thread (including attachments)
+ * up to the optional 'reply' cutoff.
+ */
 async function handleOngoingThreadMessage(
   thread: ThreadChannel,
   newUserPrompt: string,
   originalMessage: any
 ) {
-    console.log(`🔄 Entered handleOngoingThreadMessage for thread: ${thread.name}`);
+  console.log(`🔄 Entered handleOngoingThreadMessage for thread: ${thread.name}`);
 
-    let conversationMessages: { role: string; content: string }[] = [];
-
-    // If the user is replying to an older message, ignore newer messages.
-    let cutoffTime = Infinity;
-    const replyId = originalMessage.reference?.messageId;
-    if (replyId) {
-      try {
-        const repliedTo = await thread.messages.fetch(replyId);
-        cutoffTime = repliedTo.createdTimestamp;
-        console.log(`📌 Reply detected, ignoring messages after: ${cutoffTime}`);
-      } catch (error) {
-        console.warn("⚠️ Could not fetch replied-to message. Proceeding without cutoff.");
-      }
-    }
-
-    console.log(`📥 Fetching messages from thread: ${thread.name}`);
-
+  // If the user is replying to an older message, we set a cutoff
+  let cutoffTime = Infinity;
+  const replyId = originalMessage.reference?.messageId;
+  if (replyId) {
     try {
-      const fetchedMessages = await thread.messages.fetch({ limit: 100 });
-      console.log(`📑 Total messages fetched: ${fetchedMessages.size}`);
-
-      const sortedMessages = Array.from(fetchedMessages.values()).sort(
-        (a, b) => a.createdTimestamp - b.createdTimestamp
-      );
-
-      conversationMessages = sortedMessages
-        .filter((m) => {
-          if (m.createdTimestamp > cutoffTime) return false;
-          if (![MessageType.Default, MessageType.Reply].includes(m.type)) return false;
-          if (!m.content || !m.content.trim()) return false;
-          return true;
-        })
-        .map((m) => {
-          const role = m.author.bot ? "assistant" : "user";
-          console.log(`📌 Processing message: "${m.content}" (Role: ${role})`);
-          return { role, content: m.content.trim() };
-        });
-
+      const repliedTo = await thread.messages.fetch(replyId);
+      cutoffTime = repliedTo.createdTimestamp;
+      console.log(`📌 Reply detected, ignoring messages after: ${cutoffTime}`);
     } catch (error) {
-      console.error(`❌ Error fetching messages from thread:`, error);
-    }
-
-    console.log(`📤 Sending new user input to assistant: "${newUserPrompt}"`);
-
-    conversationMessages.push({ role: "user", content: newUserPrompt });
-
-    try {
-      let answer = await runAssistantConversation(assistantId, conversationMessages);
-      answer = answer.replace(/【.*?†source】/g, "");
-      console.log(`✅ Assistant response received.`);
-
-      if (answer.length > 1900) {
-        const buffer = Buffer.from(answer, "utf-8");
-        const fileAttachment = new AttachmentBuilder(buffer, { name: "response.txt" });
-        await thread.send({
-          content: "The response is too long; please see the attached file:",
-          files: [fileAttachment],
-        });
-      } else {
-        await thread.send(answer);
-      }
-    } catch (error) {
-      console.error("❌ Error running assistant conversation:", error);
-      await thread.send("There was an error processing your request. Please try again later.");
+      console.warn("⚠️ Could not fetch replied-to message. Proceeding without cutoff.");
     }
   }
 
+  console.log(`📥 Fetching messages from thread: ${thread.name}`);
 
+  // Build the conversation array
+  const conversationMessages: { role: string; content: string }[] = [];
+
+  try {
+    const fetchedMessages = await thread.messages.fetch({ limit: 100 });
+    console.log(`📑 Total messages fetched: ${fetchedMessages.size}`);
+
+    // Sort from oldest → newest
+    const sortedMessages = Array.from(fetchedMessages.values()).sort(
+      (a, b) => a.createdTimestamp - b.createdTimestamp
+    );
+
+    // For each older message, parse text + attachments
+    for (const m of sortedMessages) {
+      if (m.createdTimestamp > cutoffTime) continue;
+      if (![MessageType.Default, MessageType.Reply].includes(m.type)) continue;
+
+      // Determine role (bot vs. user)
+      const role = m.author.bot ? "assistant" : "user";
+      // Use processInput(...) with empty args to ensure attachments are parsed
+      const fullText = await processInput(m, []);
+
+      // If there's no content or attachments, skip
+      if (!fullText) continue;
+
+      console.log(`📌 Found older message: "${fullText.slice(0, 50)}..." (Role: ${role})`);
+      conversationMessages.push({ role, content: fullText });
+    }
+  } catch (error) {
+    console.error(`❌ Error fetching messages from thread:`, error);
+  }
+
+  console.log(`📤 Sending new user input to assistant: "${newUserPrompt}"`);
+
+  // Finally, push the user's new message
+  conversationMessages.push({ role: "user", content: newUserPrompt });
+
+  try {
+    let answer = await runAssistantConversation(assistantId, conversationMessages);
+    answer = answer.replace(/【.*?†source】/g, "");
+    console.log(`✅ Assistant response received.`);
+
+    if (answer.length > 1900) {
+      const buffer = Buffer.from(answer, "utf-8");
+      const fileAttachment = new AttachmentBuilder(buffer, { name: "response.txt" });
+      await thread.send({
+        content: "The response is too long; please see the attached file:",
+        files: [fileAttachment],
+      });
+    } else {
+      await thread.send(answer);
+    }
+  } catch (error) {
+    console.error("❌ Error running assistant conversation:", error);
+    await thread.send("There was an error processing your request. Please try again later.");
+  }
+}
 
 
 /**
@@ -360,16 +368,14 @@ client.on('messageCreate', async (message) => {
         return;
       }
     }
-  } else {
   }
 
-  // 2) Otherwise, parse prefix commands
+  // Otherwise, parse prefix commands
   const prefix = '!';
   if (!message.content.startsWith(prefix)) return;
 
   const args = message.content.slice(prefix.length).trim().split(/\s+/);
   const command = args.shift()?.toLowerCase();
-
   if (!command) return;
 
   console.log(`🔹 Processing command: "${command}" from ${message.author.tag}`);
