@@ -98,28 +98,43 @@ export async function addFileToVectorStore(vectorStoreId: string, fileId: string
 // -----------------
 export async function createOrUpdateAssistantWithVectorStore(vectorStoreId: string): Promise<any> {
   const payload = {
-    name: "XRPL EVM Docs Assistant",
-    description: "Provides help to xrplevm users, developers and operators with examples from the XRPL EVM documentation.",
-    model: "gpt-4o-mini", // or your chosen model
-    instructions: "You are an expert in XRPL EVM documentation. Answer questions clearly and provide reference links to the docs without including any source annotations or citations. If the question has a straight-up answer, be concise and try not to exceed 1900 characters.",
-    tools: [{ type: "file_search" }],
+    // Name your assistant accordingly:
+    name: "CKBull Assistant",
+    // Describe it so users know what it does:
+    description: "Provides help to CKBull users, covers the Nervos ecosystem, UTXO topics, BTC/Lightning interop, and more.",
+    model: "gpt-4o-mini", 
+    instructions: `
+You are an expert in the Nervos Network, CKBull, UTXO-based blockchains, Bitcoin, and Lightning Network. 
+You have various knowledge contexts:
+  - "What is CKBull?"
+  - "CKBull Roadmap 2025"
+  - "What is Nervos Network?"
+  - "What is UTXO?"
+  - "CKBull docs, user guides, dev guides"
+  - "BTC docs, Lightning docs, NFT on CKB, and more..."
+Answer questions using the content from these docs. If the user’s question has a direct answer, be concise and do not exceed 1900 characters whenever possible. 
+If needed, you can reference relevant doc sections, but do not include literal source citations or URLs in your textual answer. 
+`,
+    tools: [
+      {
+        type: "file_search",
+      },
+    ],
     tool_resources: {
       file_search: {
-        vector_store_ids: [vectorStoreId]
-      }
+        vector_store_ids: [vectorStoreId],
+      },
     },
     metadata: {},
     top_p: 1.0,
     temperature: 1.0,
-    response_format: "auto"
+    response_format: "auto",
   };
 
   return await retry(async () => {
-    const response = await axios.post(
-      `${ASSISTANT_API_BASE}`,
-      payload,
-      { headers: { 'Content-Type': 'application/json' } }
-    );
+    const response = await axios.post(`${ASSISTANT_API_BASE}`, payload, {
+      headers: { 'Content-Type': 'application/json' },
+    });
     return response.data;
   }, `Creating/updating assistant with vector store ${vectorStoreId}`);
 }
