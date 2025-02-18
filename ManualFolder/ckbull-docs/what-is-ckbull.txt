@@ -1,0 +1,135 @@
+CKBull is a 3 year old Non-Custodial Nervos Network mobile wallet for iOS, Android and APK.
+
+CKBull allows users to import any Nervos Network account with 12 word menmonic as well as creating new accounts. You can manage multiple accounts and organise each account with name tags and colors.
+
+From CKBull you can send, receive, buy, hold and stake (2.17% APY in CKB) CKB, Nervos Network native currency.
+
+
+Nervos DAO Tab in CKBull Wallet:
+Deposit and Withdraw CKB from DAO in a few clicks. Easily view your deposists which have been unstaked and check how many remaining epochs left in pending release. Pending release deposits show up in orange and available to withdraw from Nervos DAO deposits show in green.
+Nervos DAO deposits automatically compound, no need to unstake and stake again. Once the first withdraw transaction, Withdrawal in progress, is executed you can see how many CKBs you are getting compensated for the stake.
+Once Withdrawal in progress transaction is executed the rewards stop acumulating, depending on which epoch you execute the first withdrawal transaction it can take up to 180 epochs for the CKB deposit to unlock from Nervos DAO, which is between 30 and 40 days.
+Once the epoch cycle ends the user will see his unstaked deposit green and will be able to unstake executing the DAO Withdrawal transaction, unlocking from Nervos DAO the deposited CKB and the compensated rewards.
+The user has a transaction history on the DAO tab of the app where he can view all Deposit and Withdraw transaction history.
+For each transaction he can view the execution date, the transactio  status, the CKB amount for deposits and CKB unlocked balance for Withdrawal in progress, first withdraw transaction, and Compensated rewards for DAO withdrawal, second and last withdraw from DAO transaction.
+The user can also copy to clipboard the transaction hash from each transaction.
+
+Account Tab in CKBull Wallet:
+The user on the Account tab has access to all his imported or created accounts which are shown at the top of the screen below the CKBull logo.
+The account cards can receive a name tag and a color to dsitinguish them easily, as Nervos blockchain is UTXO and receiving addresses can change.
+The user can copy its address from the account's card.
+The user can edit the accounts card name tag and color.
+The user can send from the accounts card. The send button is an up arrow pointing diagonally to the right. From the send modal the user can select the account from which to send from as well as the receiving address. He can type, copy or scan with the camara the receiving address.
+The user can receive from the accounts card. The receive button is a down arrow pointing diagonally to the left. From the receive modal a QR code with the receing address for the account card is generated as well as a ckb address is displayed and shown on top of a Copy green button which copies the address to the clipboard for the user to send.
+The user can swipe between account cards. At the end right is an empty account card which instead of the usual account info this one is a "Add a new account" card from
+The user can purchase/buy CKB directly from the app with credit/debit card, apple pay, google pay and SEPA thanks to transak.com iFrame integration.
+Transak supported countries and currencies for Nervos Network and CKB crypto asset:
+
+
+
+
+
+
+
+
+
+
+CKBull supports several Nervos address lock scripts: 
+
+- SECP256k/blake160 : (Default lock script for signing CKB transactions.)
+
+    {
+  "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+  "hash_type": "type",
+  "out_point": {
+    "tx_hash": "0x71a7ba8fc96349fea0ed3a5c47992e3b4084b031a42264a018e0072e8172e46c",
+    "index": "0x0"
+  },
+  "dep_type": "dep_group"
+    }
+
+- Nervos DAO : (Lockscript for depositing/withdrawing from Nervos DAO)
+
+    {
+  "code_hash": "0x82d76d1b75fe2fd9a27dfbaa65a039221a380d76c926f378d3f81cf3e7e13f2e",
+  "hash_type": "type",
+  "out_point": {
+    "tx_hash": "0xe2fb199810d49a4d8beec56718ba2593b665db9d52299a0f9e6e75416d73ff5c",
+    "index": "0x2"
+  },
+  "dep_type": "code"
+    }
+
+- Simple UDT : (Simple User Defined Token, Script for sending/receiving/issuing sUDT Nervos Fungible tokens)
+
+    {
+  "code_hash": "0x5e7a36a77e68eecc013dfa2fe6a23f3b6c344b04005808694ae6dd45eea4cfd5",
+  "hash_type": "type",
+  "out_point": {
+    "tx_hash": "0xc7813f6a415144643970c2e88e0bb6ca6a8edc5dd7c1022746f628284a9936d5",
+    "index": "0x0"
+  },
+  "dep_type": "code"
+    }
+
+- CoTA : (A compact token aggregator standard for extremely low cost NFTs and FTs)
+
+    {
+  "code_hash": "0x1122a4fb54697cf2e6e3a96c9d80fd398a936559b90954c6e88eb7ba0cf652df",
+  "hash_type": "type",
+  "out_point": {
+    "tx_hash": "0x875db3381ebe7a730676c110e1c0d78ae1bdd0c11beacb7db4db08e368c2cd95",
+    "index": "0x0"
+  },
+  "dep_type": "dep_group"
+    }
+
+- Pw Lock : (To send to Nervos MetaMask snap integration ckb.pw)
+
+    {
+  "code_hash": "0xbf43c3602455798c1a61a596e0d95278864c552fafe231c063b3fabf97a8febc",
+  "hash_type": "type",
+  "out_point": {
+    "tx_hash": "0x1d60cb8f4666e039f418ea94730b1a8c5aa0bf2f7781474406387462924d15d4",
+    "index": "0x0"
+  },
+  "dep_type": "code"
+    }
+
+- Joy ID : (To send to joy.id type addresses.)
+
+    {
+  "code_hash": "0xd00c84f0ec8fd441c38bc3f87a371f547190f2fcff88e642bc5bf54b9e318323",
+  "hash_type": "type",
+  "out_point": {
+    "tx_hash": "0xf05188e5f3a6767fc4687faf45ba5f1a6e25d3ada6129dae8722cb282f262493",
+    "index": "0x0"
+  },
+  "dep_type": "dep_group"
+    }
+
+- xUDT :  ( Extensible User Defined Token, Script for sending/receiving/issuing xUDT Nervos Fungible tokens)
+
+    {
+  "code_hash": "0x50bd8d6680b8b9cf98b73f3c08faf8b2a21914311954118ad6609be6e78a1b95",
+  "hash_type": "data1",
+  "out_point": {
+    "tx_hash": "0xc07844ce21b38e4b071dd0e1ee3b0e27afd8d7532491327f39b786343f558ab7",
+    "index": "0x0"
+  },
+  "dep_type": "code"
+    }
+
+- Spore : (Spore NFTs)
+
+    {
+  "code_hash": "0x4a4dce1df3dffff7f8b2cd7dff7303df3b6150c9788cb75dcf6747247132b9f5",
+  "hash_type": "data1",
+  "out_point": {
+    "tx_hash": "0x96b198fb5ddbd1eed57ed667068f1f1e55d07907b4c0dbd38675a69ea1b69824",
+    "index": "0x0"
+  },
+  "dep_type": "code"
+    }
+
+
