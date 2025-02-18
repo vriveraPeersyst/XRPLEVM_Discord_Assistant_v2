@@ -36,4 +36,4 @@ yarn.lock
 repo_report.txt
 
 # Ignore all content inside the docs folder
-docs/**
+ManualFolder/github/

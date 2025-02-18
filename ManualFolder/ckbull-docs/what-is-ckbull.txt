@@ -21,17 +21,220 @@ The user can copy its address from the account's card.
 The user can edit the accounts card name tag and color.
 The user can send from the accounts card. The send button is an up arrow pointing diagonally to the right. From the send modal the user can select the account from which to send from as well as the receiving address. He can type, copy or scan with the camara the receiving address.
 The user can receive from the accounts card. The receive button is a down arrow pointing diagonally to the left. From the receive modal a QR code with the receing address for the account card is generated as well as a ckb address is displayed and shown on top of a Copy green button which copies the address to the clipboard for the user to send.
-The user can swipe between account cards. At the end right is an empty account card which instead of the usual account info this one is a "Add a new account" card from
+The user can swipe between account cards. At the right end is an empty account card which instead of the usual account info this one is a "Add a new account" card from where the user can create a new Nervos account which generates a new 12 word mnemonic for the user to save or the user can also import a nervos account with 12 word mnemonic.
+At the bottom half of the screen in the account tab depending on which account card is selected on top by the user it will display the accounts transaction history, owned currencies: (CoTA, sUDT, xUDT) and NFTs (CoTa and Spore NFTs).
+At the transaction history on the accounts tab the user can see the transaction date, currency action (received or sent), the currency amount, fiat value, senders address with a button to copy to clipboard, a receiver address with a button to copy to clipboard the transaction status and the transaction hash with a button to copy to clipboard.
+
+Center Tab/Scan Tab CKBull Wallet:
+The center tab in ckbull or the Scan tab allows the user to scan QRs from Nervos dApps which have integrated Sign In with CKBull signer app. What is CKBull Signer API?
+CKBull Signer API is a platform that allows dApps within the CKB ecosystem to integrate a transaction signing system via the CKBull Wallet.
+Developers can register their dApps on this platform using a developer interface, and they can interact with the signer API to create transactions.
+The initial release of the CKBull Signer API is completely free. As a developer, you are free to register a variety of dApps and use the API.
+
+Activity Tab in CKBull Wallet:
+The activity tab is a console for the user to see pending, signed or Connected sites for the ckbull signer app integration.
+Users can see their pending transactions in queue, click on them to open a review transaction page and sign the transaction after revising.
+Users can see the Signed transactions which have been sent to him by other dapps.
+
+News Tab in CKBull:
+The right end tab is a dedicated tab for news where twits from @NervosNetwork and @CKBull_Wallet show up for the user to follow up.
+
+
 The user can purchase/buy CKB directly from the app with credit/debit card, apple pay, google pay and SEPA thanks to transak.com iFrame integration.
 Transak supported countries and currencies for Nervos Network and CKB crypto asset:
+Below is the CSV with only the four columns. For any row where the original payment method was “Currency,” that value has been replaced with:
 
+> "SEPA, mastercard, visa, apple pay, or google pay payment method supported."
 
+Other values (such as "Pair not available in this state" or "Temporarily Suspended") remain unchanged.
 
-
-
-
-
-
+```csv
+Region,KYC Country,Fiat Currency,Payment Method for On-Ramp
+Europe,AD - Andorra,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,AT - Austria,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,BE - Belgium,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,CZ - Czech Republic,CZK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,DK - Denmark,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,DK - Denmark,DKK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,EE - Estonia,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,FO - Faroe Islands,DKK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,FI - Finland,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,FR - France,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,DE - Germany,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,GR - Greece,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,HU - Hungary,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,HU - Hungary,HUF,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,IS - Iceland,ISK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,IE - Ireland,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,IT - Italy,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,LV - Latvia,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,LT - Lithuania,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,LU - Luxembourg,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,MT - Malta,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,"MD - Moldova, Republic of",MDL,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,ME - Montenegro,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,NL - Netherlands,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,NO - Norway,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,NO - Norway,NOK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,PL - Poland,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,PL - Poland,PLN,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,PT - Portugal,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,RO - Romania,RON,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,RS - Serbia,RSD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,SK - Slovakia,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,SI - Slovenia,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,ES - Spain,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,SJ - Svalbard And Jan Mayen,NOK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,SE - Sweden,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,SE - Sweden,SEK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,CH - Switzerland,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,CH - Switzerland,CHF,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,GB - United Kingdom,GBP,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,VA - Vatican City State (Holy See),EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Europe,AX - Åland Islands,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,AW - Aruba,ANG,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,BS - Bahamas,BSD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,BZ - Belize,BZD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,BM - Bermuda,BMD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,CA - Canada,CAD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,KY - Cayman Islands,KYD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,CR - Costa Rica,CRC,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,CW - Curacao,ANG,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,DM - Dominica,XCD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,DO - Dominican Republic,DOP,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,GL - Greenland,DKK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,GD - Grenada,XCD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,GP - Guadeloupe,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,GT - Guatemala,GTQ,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,HN - Honduras,HNL,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,MQ - Martinique,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,MX - Mexico,MXN,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,PA - Panama,PAB,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,PR - Puerto Rico,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,BL - Saint Barthélemy,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,KN - Saint Kitts and Nevis,XCD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,LC - Saint Lucia,XCD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,MF - Saint Martin,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,PM - Saint Pierre And Miquelon,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,VC - Saint Vincent And The Grenadines,XCD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,TT - Trinidad and Tobago,TTD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,TC - Turks And Caicos Islands,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+North America,VI - U.S. Virgin Islands,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Alabama,USD,Pair not available in this state
+United States of America,US - Arizona,USD,Pair not available in this state
+United States of America,US - Arkansas,USD,Pair not available in this state
+United States of America,US - California,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Colorado,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Connecticut,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Delaware,USD,Pair not available in this state
+United States of America,US - District of Columbia,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Florida,USD,Pair not available in this state
+United States of America,US - Georgia,USD,Pair not available in this state
+United States of America,US - Hawaii,USD,Pair not available in this state
+United States of America,US - Idaho,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Illinois,USD,Pair not available in this state
+United States of America,US - Indiana,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Iowa,USD,Pair not available in this state
+United States of America,US - Kansas,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Kentucky,USD,Pair not available in this state
+United States of America,US - Maine,USD,Pair not available in this state
+United States of America,US - Maryland,USD,Pair not available in this state
+United States of America,US - Massachusetts,USD,Pair not available in this state
+United States of America,US - Michigan,USD,Pair not available in this state
+United States of America,US - Mississippi,USD,Pair not available in this state
+United States of America,US - Missouri,USD,Pair not available in this state
+United States of America,US - Montana,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Nebraska,USD,Pair not available in this state
+United States of America,US - Nevada,USD,Pair not available in this state
+United States of America,US - New Hampshire,USD,Pair not available in this state
+United States of America,US - New Jersey,USD,Pair not available in this state
+United States of America,US - New Mexico,USD,Pair not available in this state
+United States of America,US - North Carolina,USD,Pair not available in this state
+United States of America,US - Ohio,USD,Pair not available in this state
+United States of America,US - Oklahoma,USD,Pair not available in this state
+United States of America,US - Oregon,USD,Pair not available in this state
+United States of America,US - Pennsylvania,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Puerto Rico,USD,Pair not available in this state
+United States of America,US - Rhode Island,USD,Pair not available in this state
+United States of America,US - South Carolina,USD,Pair not available in this state
+United States of America,US - South Dakota,USD,Pair not available in this state
+United States of America,US - Tennessee,USD,Pair not available in this state
+United States of America,US - Texas,USD,Pair not available in this state
+United States of America,US - Utah,USD,Pair not available in this state
+United States of America,US - Vermont,USD,Pair not available in this state
+United States of America,US - Virginia,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Washington,USD,Pair not available in this state
+United States of America,US - West Virginia,USD,Pair not available in this state
+United States of America,US - Wisconsin,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+United States of America,US - Wyoming,USD,Pair not available in this state
+Asia,BH - Bahrain,BHD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,BN - Brunei Darussalam,BND,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,KH - Cambodia,KHR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,CX - Christmas Island,AUD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,CC - Cocos (Keeling) Islands,AUD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,CY - Cyprus,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,GE - Georgia,GEL,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,HK - Hong Kong,HKD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,"IN - India",INR,Temporarily Suspended
+Asia,ID - Indonesia,IDR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,IL - Israel,ILS,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,JP - Japan,JPY,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,KZ - Kazakhstan,KZT,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,KW - Kuwait,KWD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,KG - Kyrgyzstan,KGS,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,MY - Malaysia,MYR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,OM - Oman,OMR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,"PS - Palestine, State of",JOD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,PH - Philippines,PHP,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,SG - Singapore,SGD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,KR - South Korea,KRW,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,TW - Taiwan,TWD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,TJ - Tajikistan,TJS,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,TM - Turkmenistan,TMT,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Asia,AE - United Arab Emirates,AED,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+South America,AR - Argentina,ARS,Temporarily Suspended
+South America,BR - Brazil,BRL,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+South America,CL - Chile,CLP,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+South America,CO - Colombia,COP,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+South America,FK - Falkland Islands (the) [Malvinas],FKP,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+South America,GF - French Guiana,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+South America,PY - Paraguay,PYG,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+South America,PE - Peru,PEN,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+South America,SR - Suriname,SRD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+South America,UY - Uruguay,UYU,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,AS - American Samoa,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,AU - Australia,AUD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,CK - Cook Islands,NZD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,FJ - Fiji,FJD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,GU - Guam,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,KI - Kiribati,AUD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,NR - Nauru,AUD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,NZ - New Zealand,NZD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,NU - Niue,NZD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,NF - Norfolk Island,AUD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,MP - Northern Mariana Islands,USD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,PG - Papua New Guinea,PGK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,PN - Pitcairn,NZD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,WS - Samoa,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,SB - Solomon Islands,SBD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,TK - Tokelau,NZD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,TO - Tonga,TOP,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Oceania,TV - Tuvalu,AUD,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,AO - Angola,AOA,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,CV - Cabo Verde,CVE,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,KM - Comoros (the),KMF,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,DJ - Djibouti,DJF,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,SZ - Eswatini,SZL,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,GH - Ghana,GHS,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,MG - Madagascar,MGA,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,MW - Malawi,MWK,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,MR - Mauritania,MRU,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,YT - Mayotte,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,RW - Rwanda,RWF,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,RE - Réunion,EUR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,ST - Sao Tome and Principe,STN,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+Africa,SC - Seychelles,SCR,"SEPA, mastercard, visa, apple pay, or google pay payment method supported."
+```
 
 
 CKBull supports several Nervos address lock scripts: 
