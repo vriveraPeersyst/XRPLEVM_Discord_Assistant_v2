@@ -1,0 +1,787 @@
+all right hello everyone it's great to
+0:12
+be here I'm so excited it's my first
+0:15
+time in Thailand but also it's First
+0:17
+Time nervos conference and I'm so
+0:20
+excited for this I've been uh
+0:23
+participating in many conferences over
+0:25
+the last years in in different
+0:26
+ecosystems and I'm very glad to see that
+0:29
+the nervos conference fce netor
+0:31
+conference has so much people even now
+0:33
+in the afternoon there's still a
+0:35
+significant amount of people here which
+0:36
+I think it's it's great so thanks
+0:38
+everyone for for joining and hopefully
+0:40
+my talk uh can um bring some insightful
+0:44
+ideas to all of you uh my presentation
+0:48
+uh today I'm going to talk about app
+0:49
+interfaces for a multi-chain wall as a
+0:52
+developers we are more in in in the side
+0:55
+here that we want to provide uh useful
+0:58
+user experiences
+1:00
+and interfaces for end users I've seen a
+1:03
+lot of interesting Technologies but
+1:05
+mostly in the infrastructure side today
+1:07
+and I think if all this technology it's
+1:10
+not provided efficiently to the end
+1:12
+users it's going to be lost or it's
+1:14
+going to not be used for anyone I think
+1:16
+this is something very important that
+1:18
+most developers think on this
+1:20
+underlaying part but it's very important
+1:22
+to bring it to the real uh Mass adoption
+1:26
+otherwise your efforts are not worth it
+1:28
+right so today I want to talk about
+1:30
+these four topics first of all I I will
+1:32
+make a quick intro on why we are on a
+1:35
+multi-chain wall and why it's likely
+1:37
+that we are becoming even more
+1:39
+multi-chain over the time this is
+1:41
+something that it's it's very unlikely
+1:42
+to change then we will see how this
+1:45
+multichain impacts uh the nervous
+1:48
+ecosystem right now today and then we
+1:50
+will try to provide some best practices
+1:53
+for all the app developers that wants to
+1:55
+start interacting with a variety of
+1:57
+infrastructures behind the scenes uh how
+2:00
+to provide the user experience uh for
+2:02
+your customers that they enjoy and they
+2:04
+stay then you can retain um their
+2:07
+participation so let's start um on why
+2:11
+we are a multi-chain wall and why it's
+2:13
+likely that we continue to become
+2:15
+multi-chain and even increasingly
+2:17
+multi-chain and actually multichain STS
+2:21
+uh back in the time around 2014 balic uh
+2:25
+butterin made this blog post on ethereum
+2:28
+and called on Sil
+2:30
+and this is why because at the very
+2:32
+early days most of the people small
+2:35
+community of developers were building on
+2:36
+bitcoin right and start suddenly couple
+2:39
+of people and groups started building
+2:41
+different chains started building
+2:43
+different projects instead of pouring
+2:45
+all the efforts on bitcoin and
+2:48
+blockstream uh which is it's one of the
+2:51
+early adopter companies proposed side
+2:53
+chains and proposed side chains as a
+2:55
+criticism for all these silos that were
+2:57
+being created that were not contributing
+3:00
+to a common infrastructure all building
+3:03
+for Bitcoin but instead people were
+3:06
+taking different silos and directions
+3:08
+and sa chains was a way to say okay if
+3:10
+everyone is going to build their own
+3:12
+thing at least let's use a common layer
+3:15
+of tokenomics which can be Bitcoin and a
+3:17
+common layer of security right so it it
+3:19
+was like an intent of pting things a
+3:22
+little bit together recognizing that
+3:24
+fragmentation was started to to come out
+3:28
+and so but still some of the Bitcoin
+3:30
+maximalist arguments by the time were
+3:32
+basically saying look building silos is
+3:36
+a dispers of efforts it's better if we
+3:39
+all work together there was not that
+3:41
+many developers at the time so if all of
+3:43
+us built on top of Bitcoin then that's
+3:45
+better than creating 20 different chains
+3:48
+right and they had this idea of One X to
+3:51
+rule them all so if if we all build on
+3:53
+bitcoin then we can create this Global
+3:55
+super computer that can facilitate all
+3:57
+all the transactions and payments so
+3:59
+then fragmentation includes that
+4:01
+fragmentation is rather
+4:03
+inevitable uh and then it's the only way
+4:05
+for the ecosystem to to move
+4:09
+forward so let's see why we fragment
+4:12
+first of all why we fragment we fragment
+4:15
+because we disagree um so the first
+4:17
+thing we can do is agree that we
+4:18
+disagree and we disagree in many ways
+4:21
+the first way is say that we disagree
+4:23
+and we disagree in many ways the first
+4:26
+way it's Technic uh it's probably we are
+4:29
+going to to use one infrastructure which
+4:31
+is probably very secure for chiz the
+4:33
+assets but at the same time we will need
+4:35
+another infrastructure for storing the
+4:38
+files and the images because uh other
+4:41
+blockchains are not good for that so for
+4:43
+example we may use filecoin and then for
+4:46
+identities we may use another blockchain
+4:48
+or for oracles for Price trading Etc
+4:50
+right so you can use a set of tools that
+4:53
+has to do their own incentives for
+4:55
+example in order to provide Oracle data
+4:58
+it's very interesting to have a toonomic
+5:00
+layer that it's incentivizing to slash
+5:03
+or reward people for providing reliable
+5:06
+data at the same time if you want to
+5:08
+tokenize uh an nft itself for example in
+5:11
+ethereum or any other chain you need to
+5:13
+provide tokenomics that incentivize
+5:15
+security and stake of this network or
+5:18
+proof of work but you have a a different
+5:21
+incentives here right so having all this
+5:24
+Sate basically the the conclusion here I
+5:26
+think it's very clear now it's plurality
+5:28
+of networks will succeed and that's a
+5:30
+good thing this will provide more um use
+5:34
+cases enabl it with blockchain
+5:35
+technology and since plurality of
+5:37
+networks will succeed then we will need
+5:40
+interoperability mechanism so we can
+5:42
+aggregate all these services and provide
+5:44
+uh very good user experiences or G apps
+5:47
+that uses the maximum power of This
+5:49
+Global supercomputer which is the union
+5:51
+of most of the
+5:53
+blockchains so let's see uh how this
+5:56
+impact the nervos ecosystem so the
+5:58
+nervos ecosystem started as a nervous
+6:01
+network but right now it's overlapping
+6:03
+and having interferences with many
+6:06
+different ecosystems and let's start
+6:08
+with nervos nervos network has huge
+6:10
+advantages it has a consensus mechanism
+6:13
+that provides a very secure reliable and
+6:16
+efficient uh use of resources we have a
+6:19
+powerful smart contract capabilities
+6:21
+combining the cell model uh together
+6:24
+with the risk B virtual machine uh for
+6:26
+enhanced utx model that has scaled uh
+6:30
+transactionality and programmability on
+6:32
+top of uh on top of other blockchains
+6:35
+and we have a very good toomics for the
+6:37
+long-term holding that also creates an
+6:41
+incentive for efficient use of resources
+6:43
+to create sustainable future for the
+6:45
+network and that's very good right on
+6:48
+the on the other side uh we are seeing
+6:50
+Bitcoin lining Network that has been a
+6:52
+very successful layer to scaling
+6:54
+solution for Bitcoin that basically
+6:56
+creates onchain payment channels that
+6:59
+opens channels that can create unlimited
+7:01
+amount of uh of chain transactions and
+7:04
+then these channels are closed so this
+7:07
+provides a very low latency and very low
+7:09
+fee transactionality in the middle it
+7:12
+has hash time lock contracts that
+7:14
+mitigate counterparty Risk by securing
+7:16
+funds and at the same time it has a
+7:18
+rooting mechanism that allows opening a
+7:21
+Channel with an indirect participant and
+7:24
+finding a path in order to M this
+7:27
+transactionality as an inspiration of
+7:30
+these two we have right now and we've
+7:32
+seen recently the fiber Network the
+7:35
+fiber network is a very Noble uh
+7:37
+layering on top of ckb that also uh
+7:41
+joins and uses advantages of the nervous
+7:43
+ecosystem and allows to open these
+7:46
+offchain channels for ckb and RGB Plus+
+7:48
+assets apart from that it also has
+7:50
+onchain contracts leveraging the nervos
+7:53
+capabilities to mitigate this
+7:55
+counterparty risk and has m a variety of
+7:58
+multi-asset support and the best part is
+8:01
+that it's
+8:02
+interoperable with the lightning Network
+8:04
+payment channels which will create a
+8:06
+wide range of assets um activity
+8:10
+available so having that said uh we are
+8:13
+getting to a point now then again I
+8:15
+think us blockchain user experience was
+8:19
+quite solved or being uh significantly
+8:21
+solved for single networks but now if we
+8:24
+want to provide layer one layer two
+8:28
+swaps uh messaging between chains and
+8:30
+assets that's another nightmare and for
+8:33
+the end User it's very difficult that's
+8:34
+being used and I think the work that
+8:36
+Bitcoin lining fiber Network are doing
+8:38
+it's fantastic but if it will be a mess
+8:41
+if all this work and talent it's not
+8:43
+being put in in front of the people and
+8:46
+people can use and use the advantages
+8:48
+that this create right so there is a
+8:50
+couple of best practices that we've
+8:53
+observed uh to build um customer
+8:57
+interfaces whether you're are building a
+8:58
+the app a wallet in in our case we are
+9:00
+building a wallet but that you can use
+9:03
+in order to facilitate that and first of
+9:05
+all it's consistent user
+9:08
+experience um you want to still simplify
+9:11
+it on boarding processes uh all the
+9:13
+people here that has a the app know that
+9:15
+every single extra click you put on the
+9:17
+on boarding it's a percentage of users
+9:20
+loss so you want to keep a small
+9:22
+percentage of clicks needs to be made
+9:25
+but at the same time you want to provide
+9:27
+a some minimum amount of guide or
+9:29
+tutorial on how to use the app so people
+9:31
+gets comfortable that's something that's
+9:33
+always there then what you want to do if
+9:36
+you have multiple chains and layers it's
+9:38
+to provide as Max as maximum as possible
+9:40
+unified design language you want to T
+9:43
+the same uh visual style for all the
+9:47
+chains so if you are doing a transaction
+9:49
+you have to display it and show it in
+9:50
+the same way whether it's happening in
+9:52
+layer one in Layer Two if it's in in
+9:55
+whatever Network so people feel
+9:57
+comfortable and knowing what action they
+9:59
+perer chains are allowing you to perform
+10:01
+similar actions in a different way and
+10:03
+you can talk a unified experience
+10:06
+language and same with inter
+10:07
+interactions every time that there is a
+10:08
+transaction and you have to do a popup a
+10:12
+confirmation Etc you can do that through
+10:14
+all the different chains I think that's
+10:15
+that's very important second of all it's
+10:18
+applying some kind of chain abstraction
+10:21
+um principles in design so for example
+10:25
+seamless specifics in in in each part
+10:27
+but as as much aggregated context you
+10:29
+can provide the better uh same with
+10:32
+wallets that's pretty obvious but if if
+10:33
+you had gone to this nightmare of
+10:35
+creating and on boarding and creating a
+10:38
+wallet you don't want them to have
+10:40
+different applications and even in the
+10:42
+same application different keys for for
+10:44
+each Network so you want to provide a
+10:46
+single neonic and then derivate that
+10:49
+with the different algorithms and the
+10:51
+different networks to provide the single
+10:53
+Key Management otherwise it will be very
+10:55
+difficult for the user in terms of
+10:58
+adaptative design I I think you know the
+11:00
+pretty basic but transaction
+11:02
+transparency uh what users want to know
+11:04
+is how much fees they are paying how
+11:06
+much time they need to wait so if you
+11:09
+are especially using different networks
+11:10
+it may be that the time for completing
+11:13
+an uh payment channel uh on on a layer
+11:16
+or two it's less than 1 second in
+11:19
+another Network it's 2 minutes always
+11:21
+provide What's the total aggregated
+11:22
+number of time maybe you can provide
+11:24
+some small details but that's an
+11:26
+important part and we believe that
+11:28
+mobile first it's also very important
+11:30
+it's I think already mobile it's
+11:33
+extremely big percentage of all the
+11:35
+blockchain usage and traffic it's even
+11:38
+increasing so whether you are providing
+11:40
+a native mobile or not at least provide
+11:43
+a responsive that design that it's
+11:46
+adaptive to all the screens and sizes
+11:48
+otherwise uh it will be very difficult
+11:50
+for users to use and last but not least
+11:53
+a standardization as much
+11:55
+interoperability you have uh between
+11:57
+these networks as a standards the better
+12:00
+so for example if someone here is
+12:02
+familiar with the cosmos ecosystem there
+12:04
+is hundreds of chains all these chains
+12:06
+are based on Cosmos SDK and all of them
+12:08
+has IBC enabled which is the the
+12:12
+interoperability protocol so having that
+12:15
+you can use applications with just
+12:16
+Kepler which is one of the main wallets
+12:18
+in the ecosystem that allows you to
+12:19
+interact with 100 different chains in an
+12:22
+aggregated portfolio and it's a very
+12:24
+seamless interaction and it doesn't
+12:25
+matter if this number of chain is
+12:27
+increasing the usability is always is
+12:29
+the same so as and this is only possible
+12:31
+because IBC just standardized with all
+12:33
+of them so I think that's very important
+12:35
+same with Bridges and also with
+12:37
+identities if we can share identities
+12:39
+across different networks that's better
+12:40
+for example here we have did if the uh
+12:44
+it's recognizable and usable in all
+12:46
+layers in all networks you can have a
+12:48
+single d That's a a very good way to
+12:51
+provide a unique user
+12:53
+experience so to finish my talk I will
+12:56
+uh briefly explain how we are
+12:58
+approaching this from pist on building
+13:00
+CK bull ckb was uh one of the first
+13:04
+mobile wallets native for Theos
+13:06
+ecosystem we started about two years ago
+13:09
+and our initial approach was testing
+13:12
+everything on the nervos network we've
+13:13
+seen that it was quite difficult to
+13:15
+interact as a user to get a wallet set
+13:18
+up in your mobile and start interacting
+13:20
+with the ecosystem so we've built a
+13:22
+mobile F self- custodial wallet uh with
+13:25
+the user Centric interface and then we
+13:27
+provided access to all the nervous Fe
+13:29
+features in a very easy way to to to do
+13:31
+it so it's still available you can
+13:33
+download on Google Play and app store
+13:35
+it's seeable wallet and then you will
+13:37
+see that this provides a a quite easy to
+13:40
+use interface last year we wanted to
+13:42
+raise the bar a little bit uh we've seen
+13:44
+that the experience for developers was
+13:47
+also very difficult you need to uh build
+13:49
+everything from scratch so we added
+13:52
+signer app Feature to the to the wallet
+13:55
+so then you can connect and you can do
+13:57
+signning with K bu similar as signning
+14:00
+with metamask which basically allows you
+14:03
+as a builder to don't worry about Keys
+14:06
+just create your application and then
+14:08
+adding this connection button and then
+14:10
+users can sign transactions and uh uh
+14:13
+log in and um identify themselves
+14:16
+through that par we also built an uh a
+14:19
+built-in on RAM which helps new people
+14:22
+that if they need to go find an exchange
+14:24
+register deposit purchase ckb you you
+14:27
+lost 99% of them
+14:29
+so if you have one click in the same app
+14:31
+that you can access some CBS to start
+14:34
+using the ecosystem that's a far better
+14:37
+conversion uh we also integrated the ID
+14:40
+as identity and we are constantly add uh
+14:43
+adding address support nfts new token
+14:46
+standard so in a single layer so it's
+14:48
+easy for users but it's it's very
+14:50
+accessible so what's next what's next
+14:52
+for CK bu so what we are working now is
+14:55
+trying to embrace this multi-chain wall
+14:58
+and all this innov ations that are
+14:59
+happening in the ecosystem mostly lead
+15:01
+by the ckb eone so basically uh CK bu is
+15:05
+going to be refactored to become a
+15:07
+multi-chain wallet that Embraces all
+15:09
+this Innovation following these
+15:11
+principles where we can support nervos
+15:13
+network but we also can support fber
+15:15
+network we can support Bitcoin lining
+15:17
+Network we can support interoperability
+15:20
+between both chains and uh we apply
+15:23
+these chain abstraction techniques that
+15:25
+I mentioned before to provide or trying
+15:27
+to provide the best interface for users
+15:29
+to put this technology that was now in a
+15:32
+more underlying way and behind the
+15:34
+scenes to put it available for all the
+15:36
+people to use it so that's our plans and
+15:38
+we will be working hard and we are
+15:39
+committed to do it for the next year so
+15:43
+that's the presentation I'm happy to
+15:45
+take any questions if there is time or
+15:46
+otherwise outside and thank you guys for
+15:48
+joining
+15:49
+[Applause]

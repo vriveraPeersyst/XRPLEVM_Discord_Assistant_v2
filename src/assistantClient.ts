@@ -7,6 +7,8 @@ import { Message, ThreadChannel, MessageType, Attachment } from 'discord.js';
 import Tesseract from 'tesseract.js';
 import pdf from 'pdf-parse';
 
+
+
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
 const ASSISTANT_API_BASE = process.env.ASSISTANT_API_BASE!; // e.g. "https://api.openai.com/v1/assistants"
 const ASSISTANT_FILES_API_BASE = process.env.ASSISTANT_FILES_API_BASE!; // e.g. "https://api.openai.com/v1/files"
@@ -26,7 +28,7 @@ async function retry<T>(
   fn: () => Promise<T>,
   context: string,
   maxAttempts = 3,
-  delay = 2000
+  delay = 1000
 ): Promise<T> {
   let attempt = 0;
   while (true) {
@@ -112,7 +114,7 @@ You have various knowledge contexts:
   - "What is UTXO?"
   - "CKBull docs, user guides, dev guides"
   - "BTC docs, Lightning docs, NFT on CKB, and more..."
-Answer questions using the content from these docs. If the user’s question has a direct answer, be concise and do not exceed 1900 characters whenever possible. 
+Answer questions using the content from these docs. 
 If needed, you can reference relevant doc sections, but do not include literal source citations or URLs in your textual answer. 
 `,
     tools: [
@@ -257,8 +259,8 @@ export async function runAssistantConversation(
   const runRes = await axios.post(`https://api.openai.com/v1/threads/${threadId}/runs`, {
     assistant_id: assistantId,
     instructions: "Please provide a detailed answer based on the conversation context, including references to the XRPL EVM documentation but without any source annotations or citations. Be concise.",
-    max_prompt_tokens: 30000,
-    max_completion_tokens: 30000,
+    max_prompt_tokens: 20000,
+    max_completion_tokens: 20000,
   });
   let runResult = runRes.data;
   console.log("Run started with ID:", runResult.id);

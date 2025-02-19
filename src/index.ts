@@ -24,6 +24,20 @@ import pdf from 'pdf-parse';
 import path from 'path';
 import fs from 'fs';
 
+// Add at the top of your file (if not already imported)
+import readline from 'readline';
+
+// Helper to ask a yes/no question.
+async function askYesNo(question: string): Promise<boolean> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise(resolve => {
+    rl.question(question, answer => {
+      rl.close();
+      resolve(answer.trim().toLowerCase() === 'y' || answer.trim().toLowerCase() === 'yes');
+    });
+  });
+}
+
 dotenv.config();
 
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
@@ -75,52 +89,74 @@ function gatherTextFiles(rootDir: string): string[] {
  * 5. Upload each .txt file and add them to a vector store.
  * 6. Create or update the Assistant with that vector store.
  */
+// Modified updateAssistantDocs function
 async function updateAssistantDocs() {
-  console.log('Updating docs from GitHub...');
-  await updateDocsRepos();
+  // Path to save the vector store id for future runs.
+  const vectorStoreIdPath = path.join(__dirname, '..', 'vectorStoreId.txt');
 
-  // Convert Markdown files (existing functionality).
-  const mdTxtFiles = convertAllMdToTxt();
-  console.log('Converted Markdown files:', mdTxtFiles);
-
-  // Convert non-text files (PDFs, CSVs, images) to .txt.
-  const manualFolderPath = path.join(__dirname, '..', 'ManualFolder');
-  const nonTextTxtFiles = await convertNonTextToTxt(manualFolderPath);
-  console.log('Converted non-text files:', nonTextTxtFiles);
-
-  // Gather all .txt files from ManualFolder.
-  const allTextFiles = gatherTextFiles(manualFolderPath);
-  console.log('All text files to upload:', allTextFiles);
-
-  // Upload each file and collect their file IDs.
-  const fileIds: string[] = [];
-  for (const filePath of allTextFiles) {
-    try {
-      const uploaded = await uploadFile(filePath);
-      fileIds.push(uploaded.id);
-      console.log(`Uploaded ${filePath} as file id: ${uploaded.id}`);
-    } catch (err) {
-      console.error(`Error uploading ${filePath}:`, err);
-    }
-  }
-
-  // Create a vector store.
+  // Ask if the user wants to re-upload files to the vector store.
+  const reupload = await askYesNo("Do you want to re-upload files to the vector store? (y/n): ");
   let vectorStoreId: string;
-  try {
-    vectorStoreId = await createVectorStore("Nervos Docs Vector Store");
-    console.log("Created vector store with ID:", vectorStoreId);
-  } catch (err) {
-    console.error("Error creating vector store:", err);
-    return;
-  }
 
-  // Add each uploaded file to the vector store.
-  for (const fileId of fileIds) {
+  if (reupload) {
+    console.log('Updating docs from GitHub...');
+    await updateDocsRepos();
+
+    // Convert Markdown files.
+    const mdTxtFiles = convertAllMdToTxt();
+    console.log('Converted Markdown files:', mdTxtFiles);
+
+    // Convert non‑text files (PDFs, CSVs, images) to .txt.
+    const manualFolderPath = path.join(__dirname, '..', 'ManualFolder');
+    const nonTextTxtFiles = await convertNonTextToTxt(manualFolderPath);
+    console.log('Converted non‑text files:', nonTextTxtFiles);
+
+    // Gather all .txt files.
+    const allTextFiles = gatherTextFiles(manualFolderPath);
+    console.log('All text files to upload:', allTextFiles);
+
+    // Upload each file and collect their file IDs.
+    const fileIds: string[] = [];
+    for (const filePath of allTextFiles) {
+      try {
+        const uploaded = await uploadFile(filePath);
+        fileIds.push(uploaded.id);
+        console.log(`Uploaded ${filePath} as file id: ${uploaded.id}`);
+      } catch (err) {
+        console.error(`Error uploading ${filePath}:`, err);
+      }
+    }
+
+    // Create a new vector store.
     try {
-      await addFileToVectorStore(vectorStoreId, fileId);
-      console.log(`Added file id ${fileId} to vector store`);
+      vectorStoreId = await createVectorStore("Nervos Docs Vector Store");
+      console.log("Created vector store with ID:", vectorStoreId);
     } catch (err) {
-      console.error(`Error adding file id ${fileId}:`, err);
+      console.error("Error creating vector store:", err);
+      return;
+    }
+
+    // Add each uploaded file to the vector store.
+    for (const fileId of fileIds) {
+      try {
+        await addFileToVectorStore(vectorStoreId, fileId);
+        console.log(`Added file id ${fileId} to vector store`);
+      } catch (err) {
+        console.error(`Error adding file id ${fileId}:`, err);
+      }
+    }
+
+    // Save the vector store id for future runs.
+    fs.writeFileSync(vectorStoreIdPath, vectorStoreId, 'utf-8');
+    console.log(`Vector store ID saved to ${vectorStoreIdPath}`);
+  } else {
+    // Use an existing vector store id if available.
+    if (fs.existsSync(vectorStoreIdPath)) {
+      vectorStoreId = fs.readFileSync(vectorStoreIdPath, 'utf-8').trim();
+      console.log(`Using existing vector store id: ${vectorStoreId}`);
+    } else {
+      console.log("No existing vector store id found. Proceeding with file upload.");
+      return updateAssistantDocs();
     }
   }
 
@@ -133,6 +169,7 @@ async function updateAssistantDocs() {
     console.error('Error creating/updating Assistant:', err);
   }
 }
+
 
 /**
  * Extract text from a document attachment (.txt, .md, .pdf, .csv).

@@ -35,6 +35,7 @@ find . \
   -type f \
   \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.sh" -o -name "*.json" \) \
   -not -path "*node_modules*" \
+  -not -path "*ManualFolder*" \
   -not -path "*docs*" \
   -not -name "package-lock.json" \
   -not -path "*/.git/*" \

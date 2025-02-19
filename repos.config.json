@@ -5,12 +5,12 @@
         "url": "https://github.com/nervosnetwork/docs"
       },
       {
-        "name": "btc-docs",
-        "url": "https://github.com/bitcoin/bips"
+        "name": "ckbull-signer-docs",
+        "url": "https://github.com/vriveraPeersyst/ckbull-developer-panel.git"
       },
       {
-        "name": "lightning-docs",
-        "url": "https://github.com/lightningnetwork/lightning-rfc"
+        "name": "ckbull-spore-nfts-docs",
+        "url": "https://github.com/sporeprotocol/spore-docs.git"
       }
     ]
   }

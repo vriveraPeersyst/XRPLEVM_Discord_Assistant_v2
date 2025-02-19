@@ -39,6 +39,9 @@ Users can see the Signed transactions which have been sent to him by other dapps
 News Tab in CKBull:
 The right end tab is a dedicated tab for news where twits from @NervosNetwork and @CKBull_Wallet show up for the user to follow up.
 
+Settings ⚙️ in CKBull:
+
+
 
 The user can purchase/buy CKB directly from the app with credit/debit card, apple pay, google pay and SEPA thanks to transak.com iFrame integration.
 Transak supported countries and currencies for Nervos Network and CKB crypto asset:
