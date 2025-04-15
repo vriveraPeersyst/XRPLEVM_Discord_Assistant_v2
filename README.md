@@ -1,140 +1,25 @@
 # CKBull Discord Agent
 
-A Discord bot that leverages OpenAI's assistant API to provide contextual assistance for CKBull users. It processes text and file attachments (including PDFs and images via OCR), integrates a vector store for document search, and manages both stateless and threaded conversations on Discord.
-
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-  - [Bot Commands](#bot-commands)
-  - [File Processing & Assistant Interaction](#file-processing--assistant-interaction)
-- [Scripts](#scripts)
-- [Repository Structure](#repository-structure)
-- [License](#license)
+A comprehensive Discord bot assistant that integrates with the Nervos ecosystem. It uses the OpenAI API to manage conversational interactions, processes various file formats (PDFs, images, CSVs) to extract text, and manages scheduled tasks for dynamic content updates and responses. The bot also leverages documentation from associated repositories to enrich its responses.
 
 ---
 
 ## Features
 
-- **Discord Integration:**  
-  Connects to Discord using a bot token and listens for commands and messages.
+- **Interactive Assistant:**  
+  Engage in real-time, context-based conversations on Discord using OpenAI-powered responses.
 
-- **Assistant API Integration:**  
-  Communicates with the OpenAI assistant API to create/update an assistant using a vector store and file search capabilities.
+- **File Conversion & OCR:**  
+  Converts non-text files (PDFs, images, CSVs) to text using [pdf-parse](https://www.npmjs.com/package/pdf-parse) and [Tesseract.js](https://tesseract.projectnaptha.com/).
 
-- **Document Processing:**  
-  - Uploads files to the assistant API.
-  - Extracts text from PDFs, text/markdown documents, CSV files, and images (using OCR with Tesseract).
+- **Scheduled Content:**  
+  Supports scheduling of prompts through cron jobs so that assistant messages can be sent automatically in specified channels.
 
-- **Threaded Conversations:**  
-  Supports both stateless single-message conversations and multi-message threaded conversations (public or private).
-
-- **Automatic Docs Update:**  
-  Updates and converts documentation from GitHub to keep the assistant up-to-date with relevant content.
+- **Documentation Integration:**  
+  Automatically updates and integrates related documentation (e.g., Nervos docs, CKBull user/developer guides) to provide rich, contextual answers. See details in `repos.config.json`.
 
 - **Backup & Export:**  
-  Generates a comprehensive repository report including the file structure and contents using the `backup_and_export.sh` script.
-
----
-
-## Prerequisites
-
-- **Node.js** (v14 or later)
-- **npm** (or your preferred Node package manager)
-- **TypeScript**
-
----
-
-## Installation
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/yourusername/ckbull_discord_agent.git
-   cd ckbull_discord_agent
-   ```
-
-2. **Install dependencies:**
-
-   ```bash
-   npm install
-   ```
-
-3. **Compile TypeScript (if needed):**
-
-   ```bash
-   npx tsc
-   ```
-
----
-
-## Configuration
-
-1. **Environment Variables:**  
-   Copy the provided environment example file and update it with your credentials.
-
-   ```bash
-   cp .env.example .env
-   ```
-
-2. **Required Environment Variables:**
-
-   - `DISCORD_BOT_TOKEN` – Your Discord bot token.
-   - `OPENAI_API_KEY` – Your OpenAI API key.
-   - `ASSISTANT_API_BASE` – Base URL for the assistant API (e.g., `https://api.openai.com/v1/assistants`).
-   - `ASSISTANT_FILES_API_BASE` – Base URL for file upload endpoints (e.g., `https://api.openai.com/v1/files`).
-
----
-
-## Usage
-
-### Bot Commands
-
-Once the bot is running, you can interact with it via Discord using the following commands:
-
-- **`!askbull`**  
-  Sends a single-message (stateless) query to the assistant.  
-  _Example:_  
-  ```text
-  !askbull How do I set up my wallet?
-  ```
-
-- **`!askbullthread`**  
-  Initiates a public thread-based conversation with context.
-
-- **`!askbullprivatethread`**  
-  Starts a private thread-based conversation.
-
-*Note: The bot automatically handles replies in existing threads to continue the conversation context.*
-
-### File Processing & Assistant Interaction
-
-- **Attachments:**  
-  The bot supports various file types:
-  - **Documents:** `.txt`, `.md`, `.pdf`, `.csv`
-  - **Images:** `.png`, `.jpg`, `.jpeg`, `.gif` (processed via OCR using Tesseract)
-
-- **Assistant Conversation:**  
-  The bot processes message content and attachments, constructs a conversation context, and then interacts with the assistant API to generate a reply. If the response is too lengthy, it will be sent as a text file attachment.
-
----
-
-## Scripts
-
-- **`npm run start`**  
-  Starts the bot using `ts-node` (as defined in `package.json`).
-
-- **`backup_and_export.sh`**  
-  Generates a report (`repo_report.txt`) containing the repository structure and file contents.  
-  _Usage:_  
-  ```bash
-  ./backup_and_export.sh
-  ```
+  Includes a script to generate a comprehensive report (`repo_report.txt`) that outlines the repository structure and major file contents.
 
 ---
 
@@ -144,18 +29,160 @@ Once the bot is running, you can interact with it via Discord using the followin
 .
 ├── .env.example
 ├── .gitignore
+├── ManualFolder
+│   └── ckbull-docs
+│       ├── CKBull_How_its_Made.pdf
+│       ├── CKBull_How_its_Made.txt
+│       ├── ckbull-roadmap-txt
+│       ├── ferran-at-ckcon.txt
+│       ├── joan-docs.txt
+│       └── what-is-ckbull.txt
+├── README.md
 ├── backup_and_export.sh
+├── eng.traineddata
 ├── package.json
 ├── repo_report.txt
+├── repos.config.json
 ├── src
-│   ├── assistantClient.ts      # Handles assistant API interactions and file uploads
-│   ├── docsUpdater.ts          # Updates docs from GitHub and converts markdown to text (implementation details)
-│   └── index.ts                # Main entry point; sets up the Discord client and command handling
-└── tsconfig.json
+│   ├── assistantClient.ts
+│   ├── assistantGlobals.ts
+│   ├── assistantManager.ts
+│   ├── assistantRunner.ts
+│   ├── cliUtils.ts
+│   ├── commands
+│   │   ├── bullManager.ts
+│   │   └── deploy-commands.ts
+│   ├── convertNonTextToTxt.ts
+│   ├── docsUpdater.ts
+│   ├── fileProcessor.ts
+│   ├── index.ts
+│   ├── messageProcessor.ts
+│   ├── scheduler.ts
+│   └── threadHandler.ts
+├── tsconfig.json
+└── vectorStoreId.txt
 ```
+
+---
+
+## Prerequisites
+
+- **Node.js:** Version 14 or later (Node.js v16+ is recommended)
+- **npm or yarn:** To manage dependencies
+
+*Environment Variables*  
+Ensure that you set up the following environment variables (you can use the provided `.env.example` as a template):
+
+- `DISCORD_BOT_TOKEN` – Your Discord bot token.
+- `OPENAI_API_KEY` – Your OpenAI API key.
+- `ASSISTANT_API_BASE` – URL to the OpenAI assistant API endpoint (e.g., `https://api.openai.com/v1/assistants`).
+- `ASSISTANT_FILES_API_BASE` – URL for file uploads to the assistant service.
+- `CLIENT_ID` – Your Discord application's client ID.
+- `GUILD_ID` (optional) – For guild-specific slash commands.
+
+---
+
+## Installation
+
+1. **Clone the Repository:**
+
+   ```bash
+   git clone https://github.com/your-username/ckbull_discord_agent.git
+   cd ckbull_discord_agent
+   ```
+
+2. **Install Dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables:**
+
+   - Copy the example environment file:
+     ```bash
+     cp .env.example .env
+     ```
+   - Update the `.env` file with your credentials and configuration details.
+
+---
+
+## Usage
+
+### Starting the Bot
+
+Run the following command to start the bot:
+
+```bash
+npm start
+```
+
+Upon starting, the bot will:
+- Log in to Discord.
+- Initialize the assistant, update documentation, and set up scheduled content based on the configuration.
+- Listen for messages and commands to manage assistant conversations.
+
+### Commands
+
+- **Text Commands:**
+  - `!askbull` – Initiates a stateless assistant conversation.
+  - `!askbullthread` or `!askbullprivatethread` – Starts a dedicated conversation thread for more focused interactions.
+
+- **Slash Commands (via Discord):**
+  - `/bullmanager update` – Updates assistant docs by re-uploading files and resetting the vector store.
+  - `/bullmanager add` – Adds new scheduled content interactively.
+  - `/bullmanager toggle` – Toggles the status (active/paused) of a scheduled content job.
+  - `/bullmanager list` – Lists all scheduled content jobs.
+
+---
+
+## Scheduled Content
+
+The project supports scheduling assistant prompts using cron-like expressions. Scheduled jobs automatically send assistant responses to the designated channel. To configure or modify these jobs, review the code in `src/scheduler.ts` and use the slash commands provided by the `bullManager` command group.
+
+---
+
+## Backup & Export
+
+The script `backup_and_export.sh` generates a detailed report (`repo_report.txt`) that documents the repository structure and key file contents. To run the backup:
+
+```bash
+./backup_and_export.sh
+```
+
+---
+
+## Related Repositories
+
+This project integrates documentation from several related repositories. Check out the repositories listed in `repos.config.json`:
+
+- [nervos-docs](https://github.com/nervosnetwork/docs)
+- [ckbull-signer-docs](https://github.com/vriveraPeersyst/ckbull-developer-panel.git)
+- [ckbull-spore-nfts-docs](https://github.com/sporeprotocol/spore-docs.git)
+
+---
+
+## Development & Contributing
+
+- **TypeScript:** The project is entirely written in TypeScript.
+- **Modular Codebase:** The code is organized into distinct modules for assistant logic, file processing, scheduling, and command handling.
+- Contributions are welcome! Please open issues or submit pull requests with improvements or bug fixes.
 
 ---
 
 ## License
 
-This project is licensed under the ISC License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the ISC License.
+
+---
+
+## Acknowledgements
+
+- [Discord.js](https://discord.js.org/)
+- [OpenAI API](https://openai.com/)
+- [pdf-parse](https://www.npmjs.com/package/pdf-parse)
+- [Tesseract.js](https://tesseract.projectnaptha.com/)
+
+---
+
+Happy coding and enjoy building with CKBull Discord Agent!
