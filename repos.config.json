@@ -5,16 +5,16 @@
         "url": "https://github.com/ripple/docs.xrplevm.org.git"
       },
       {
-        "name": "xrpl-docs",
-        "url": "https://github.com/XRPLF/xrpl-dev-portal.git"
-      },
-      {
         "name": "cosmos-docs",
         "url": "https://github.com/cosmos/cosmos-sdk.git"
       },
       {
         "name": "evmos-docs",
         "url": "https://github.com/evmos/docs.git"
+      },
+      {
+        "name": "axelar-docs",
+        "url": "https://github.com/axelarnetwork/axelar-docs.git"
       }
     ]
   }

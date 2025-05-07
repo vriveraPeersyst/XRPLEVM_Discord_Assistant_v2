@@ -1,4 +1,3 @@
-// src/threadHandler.ts
 import { ThreadChannel, MessageType, AttachmentBuilder, ChannelType } from 'discord.js';
 import { processInput } from './messageProcessor';
 import { runAssistantConversation } from './assistantClient';
@@ -11,9 +10,11 @@ export async function handleThreadCommand(message: any, args: string[], isPrivat
   } else {
     try {
       const threadOptions: any = {
-        name: isPrivate ? `askBull Private Conversation` : `askBull Conversation`,
+        name: isPrivate
+          ? `xrplevm Private Conversation`
+          : `xrplevm Conversation`,
         autoArchiveDuration: 60,
-        reason: 'Conversation with CKBull assistant',
+        reason: 'Conversation with XRPLEVM assistant',
       };
       if (isPrivate) {
         threadOptions.type = ChannelType.GuildPrivateThread;
@@ -45,14 +46,14 @@ export async function handleOngoingThreadMessage(
       const repliedTo = await thread.messages.fetch(replyId);
       cutoffTime = repliedTo.createdTimestamp;
       console.log(`Reply detected; ignoring messages after: ${cutoffTime}`);
-    } catch (error) {
+    } catch {
       console.warn("Could not fetch replied-to message. Proceeding without cutoff.");
     }
   }
   const conversationMessages: { role: string; content: string }[] = [];
   try {
     const fetchedMessages = await thread.messages.fetch({ limit: 100 });
-    const sorted = Array.from(fetchedMessages.values()).sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+    const sorted = [...fetchedMessages.values()].sort((a, b) => a.createdTimestamp - b.createdTimestamp);
     for (const m of sorted) {
       if (m.createdTimestamp > cutoffTime) continue;
       if (![MessageType.Default, MessageType.Reply].includes(m.type)) continue;

@@ -64,25 +64,30 @@ export async function convertNonTextToTxt(rootDir: string): Promise<string[]> {
  */
 async function extractText(filePath: string, ext: string): Promise<string> {
   const lowerExt = ext.toLowerCase();
-  // We'll read file data as a Buffer if needed
   const fileBuffer = await fs.promises.readFile(filePath);
 
-  // 1) PDF
   if (lowerExt === '.pdf') {
     const pdfData = await pdfParse(fileBuffer);
     return pdfData.text || '';
   }
 
-  // 2) Images -> Tesseract OCR
   if (['.png', '.jpg', '.jpeg', '.gif'].includes(lowerExt)) {
-    const { data } = await Tesseract.recognize(fileBuffer, 'eng');
-    return data.text || '';
+    try {
+      const { data } = await Tesseract.recognize(fileBuffer, 'eng');
+      return data.text || '';
+    } catch (ocrErr) {
+      if (ocrErr instanceof Error) {
+        console.error(`⚠️ OCR failed for ${filePath}:`, ocrErr.message);
+      } else {
+        console.error(`⚠️ OCR failed for ${filePath}:`, String(ocrErr));
+      }
+      return '';   // swallow and continue
+    }
   }
 
-  // 3) CSV (or other text-based formats)
   if (lowerExt === '.csv') {
     return fileBuffer.toString('utf-8');
   }
 
-  return ''; // fallback
+  return '';
 }
