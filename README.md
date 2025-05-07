@@ -1,188 +1,326 @@
-# CKBull Discord Agent
 
-A comprehensive Discord bot assistant that integrates with the Nervos ecosystem. It uses the OpenAI API to manage conversational interactions, processes various file formats (PDFs, images, CSVs) to extract text, and manages scheduled tasks for dynamic content updates and responses. The bot also leverages documentation from associated repositories to enrich its responses.
+# XRPL-EVM Discord Assistant
+
+> A Discord bot powered by OpenAI Assistants & Vector Stores, providing on-chain and developer documentation lookup for XRPL-EVM, Cosmos, Evmos, and related ecosystems.
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)  
+2. [Features](#features)  
+3. [Architecture & Workflow](#architecture--workflow)  
+4. [Repository Structure](#repository-structure)  
+5. [Getting Started](#getting-started)  
+   - [Prerequisites](#prerequisites)  
+   - [Installation](#installation)  
+   - [Configuration](#configuration)  
+6. [Environment Variables](#environment-variables)  
+7. [Usage](#usage)  
+   - [Stateless Commands](#stateless-commands)  
+   - [Threaded Conversations](#threaded-conversations)  
+   - [Slash Commands (BullManager)](#slash-commands-bullmanager)  
+8. [Documentation Ingestion & Vector Store](#documentation-ingestion--vector-store)  
+   - [Repos Config](#repos-config)  
+   - [Markdown → Text Conversion](#markdown--text-conversion)  
+   - [ManualFolder Assets](#manualfolder-assets)  
+   - [Uploading & Vectorization](#uploading--vectorization)  
+9. [Daily Auto-Update & Logging](#daily-auto-update--logging)  
+10. [Scheduled Content Jobs](#scheduled-content-jobs)  
+11. [Development](#development)  
+12. [Contributing](#contributing)  
+13. [License](#license)  
+
+---
+
+## Overview
+
+The **XRPL-EVM Discord Assistant** is a powerful, context-aware helper designed for XRPL-EVM and related blockchain ecosystems. It:
+
+- **Ingests** on-chain documentation from multiple GitHub repos  
+- **Converts** Markdown, PDFs, images, and CSVs into plain text  
+- **Uploads** text assets into an OpenAI vector store for high-fidelity retrieval  
+- **Runs** a custom OpenAI Assistant (gpt-4o-mini) with file‐search tools  
+- **Integrates** tightly with Discord for stateless queries, threaded conversations, slash commands, and scheduled pushes  
 
 ---
 
 ## Features
 
-- **Interactive Assistant:**  
-  Engage in real-time, context-based conversations on Discord using OpenAI-powered responses.
+- 🔍 **Contextual Q&A** against XRPL-EVM, XRPL Core, Cosmos SDK, Evmos docs  
+- 📄 **Auto-conversion** of Markdown, PDF, image, and CSV docs to text  
+- 🌐 **Vector store** creation & daily refresh  
+- 🗓️ **Scheduled content** pushes via slash commands (`/bullmanager`)  
+- 📝 **Threaded** multi-message dialogues with full history  
+- 🛠️ **Admin logging** of daily doc refreshes to a dedicated channel  
 
-- **File Conversion & OCR:**  
-  Converts non-text files (PDFs, images, CSVs) to text using [pdf-parse](https://www.npmjs.com/package/pdf-parse) and [Tesseract.js](https://tesseract.projectnaptha.com/).
+---
 
-- **Scheduled Content:**  
-  Supports scheduling of prompts through cron jobs so that assistant messages can be sent automatically in specified channels.
+## Architecture & Workflow
 
-- **Documentation Integration:**  
-  Automatically updates and integrates related documentation (e.g., Nervos docs, CKBull user/developer guides) to provide rich, contextual answers. See details in `repos.config.json`.
-
-- **Backup & Export:**  
-  Includes a script to generate a comprehensive report (`repo_report.txt`) that outlines the repository structure and major file contents.
+1. **DocsUpdater**  
+   - Clones/pulls each GitHub repo from `repos.config.json`  
+   - Converts `.md` → `.txt` via `convertAllMdToTxt()`  
+2. **ManualFolder Ingestion**  
+   - OCR/PDF/text extraction via `convertNonTextToTxt()`  
+3. **Vector Store**  
+   - Uploads every `.txt` to OpenAI Files API  
+   - Creates a new vector store daily  
+   - Adds all file IDs to the store  
+4. **Assistant Deployment**  
+   - Calls OpenAI Assistants API with vector store ID  
+   - Persists Assistant ID in `vectorStoreId.txt`  
+5. **Discord Integration**  
+   - **Stateless**: `!askbull <query>` → immediate answer  
+   - **Threads**: `!askbullthread <query>` → creates/continues a thread  
+   - **Slash Commands**: `/bullmanager` → manage updates & schedules  
+   - **Scheduled Jobs**: cron jobs to push content to channels  
+6. **Daily Cron**  
+   - Runs at **02:00 UTC** every day  
+   - Sends a log (success/failure) to the configured admin channel  
+   - Automatically updates vector store and assistant  
 
 ---
 
 ## Repository Structure
 
 ```
+
 .
-├── .env.example
+├── .env.example                  # Sample environment variables
 ├── .gitignore
-├── ManualFolder
-│   └── ckbull-docs
-│       ├── CKBull_How_its_Made.pdf
-│       ├── CKBull_How_its_Made.txt
-│       ├── ckbull-roadmap-txt
-│       ├── ferran-at-ckcon.txt
-│       ├── joan-docs.txt
-│       └── what-is-ckbull.txt
-├── README.md
-├── backup_and_export.sh
-├── eng.traineddata
+├── ManualFolder/
+│   └── xrplevmManualDocs/
+│       └── xrplevm-dapps-explorer-apps.txt
+├── README.md                     # ← you are here
+├── backup\_and\_export.sh          # Generates repo report (for audits)
+├── eng.traineddata               # Tesseract language data
 ├── package.json
-├── repo_report.txt
-├── repos.config.json
-├── src
-│   ├── assistantClient.ts
-│   ├── assistantGlobals.ts
-│   ├── assistantManager.ts
-│   ├── assistantRunner.ts
-│   ├── cliUtils.ts
-│   ├── commands
-│   │   ├── bullManager.ts
-│   │   └── deploy-commands.ts
-│   ├── convertNonTextToTxt.ts
-│   ├── docsUpdater.ts
-│   ├── fileProcessor.ts
-│   ├── index.ts
-│   ├── messageProcessor.ts
-│   ├── scheduler.ts
-│   └── threadHandler.ts
+├── repo\_report.txt               # Generated by backup script
+├── repos.config.json             # List of doc repos to clone
 ├── tsconfig.json
-└── vectorStoreId.txt
-```
+├── vectorStoreId.txt             # Persisted vector store ID
+└── src/
+├── assistantClient.ts        # OpenAI Files & Assistants API wrappers
+├── assistantGlobals.ts       # In-memory Assistant ID store
+├── assistantManager.ts       # Interactive slash-command schedulers
+├── assistantRunner.ts        # Helper for sending replies
+├── cliUtils.ts               # Simple Y/N prompt (no longer used)
+├── commands/
+│   ├── bullManager.ts        # Slash‐command definitions
+│   └── deploy-commands.ts    # Registers slash commands with Discord
+├── convertNonTextToTxt.ts    # PDF/image/CSV → text extractor
+├── docsUpdater.ts            # Git clone/pull & markdown converter
+├── fileProcessor.ts          # Legacy non-text converter & gatherer
+├── index.ts                  # Bot entrypoint, all setup & handlers
+├── messageProcessor.ts       # Processes content + attachments
+├── scheduler.ts              # Scheduled content job registry
+└── threadHandler.ts          # Thread‐based conversation logic
+
+````
 
 ---
 
-## Prerequisites
+## Getting Started
 
-- **Node.js:** Version 14 or later (Node.js v16+ is recommended)
-- **npm or yarn:** To manage dependencies
+### Prerequisites
 
-*Environment Variables*  
-Ensure that you set up the following environment variables (you can use the provided `.env.example` as a template):
+- **Node.js** ≥ 18  
+- **npm** or **yarn**  
+- **Discord Bot** application & token  
+- **OpenAI** API key & Assistants beta access  
 
-- `DISCORD_BOT_TOKEN` – Your Discord bot token.
-- `OPENAI_API_KEY` – Your OpenAI API key.
-- `ASSISTANT_API_BASE` – URL to the OpenAI assistant API endpoint (e.g., `https://api.openai.com/v1/assistants`).
-- `ASSISTANT_FILES_API_BASE` – URL for file uploads to the assistant service.
-- `CLIENT_ID` – Your Discord application's client ID.
-- `GUILD_ID` (optional) – For guild-specific slash commands.
+### Installation
 
----
-
-## Installation
-
-1. **Clone the Repository:**
-
+1. **Clone** this repo:
    ```bash
-   git clone https://github.com/your-username/ckbull_discord_agent.git
-   cd ckbull_discord_agent
-   ```
+   git clone https://github.com/vriveraPeersyst/XRPLEVM_Discord_Assistant_v2.git
+   cd XRPLEVM_Discord_Assistant_v2
+````
 
-2. **Install Dependencies:**
+2. **Install** dependencies:
 
    ```bash
    npm install
+   # or
+   yarn install
+   ```
+3. **Build** TypeScript (optional):
+
+   ```bash
+   tsc
    ```
 
-3. **Configure Environment Variables:**
+### Configuration
 
-   - Copy the example environment file:
-     ```bash
-     cp .env.example .env
-     ```
-   - Update the `.env` file with your credentials and configuration details.
+1. **Copy** `.env.example` → `.env` and fill in:
+
+   ```env
+   DISCORD_BOT_TOKEN=your_discord_bot_token
+   CLIENT_ID=your_discord_app_client_id
+   GUILD_ID=your_guild_id_if_using_guild_commands
+   OPENAI_API_KEY=sk-...
+   ASSISTANT_API_BASE=https://api.openai.com/v1/assistants
+   ASSISTANT_FILES_API_BASE=https://api.openai.com/v1/files
+   ADMIN_CHANNEL_ID=123456789012345678   # Channel for daily logs
+   ```
+2. **Edit** `repos.config.json` to include any additional documentation GitHub URLs.
+
+---
+
+## Environment Variables
+
+| Variable                   | Description                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| `DISCORD_BOT_TOKEN`        | Bot token from Discord Developer Portal                                      |
+| `CLIENT_ID`                | Application (bot) client ID                                                  |
+| `GUILD_ID`                 | (Optional) guild ID for guild-scoped slash commands                          |
+| `OPENAI_API_KEY`           | Your OpenAI API key                                                          |
+| `ASSISTANT_API_BASE`       | Base URL for Assistants API (usually `https://api.openai.com/v1/assistants`) |
+| `ASSISTANT_FILES_API_BASE` | Base URL for Files API (`https://api.openai.com/v1/files`)                   |
+| `ADMIN_CHANNEL_ID`         | Discord channel ID to receive daily update logs                              |
 
 ---
 
 ## Usage
 
-### Starting the Bot
+### Stateless Commands
 
-Run the following command to start the bot:
+* **Ask a question:**
 
-```bash
-npm start
-```
+  ```txt
+  !askbull How do I deploy an XRPL-EVM smart contract?
+  ```
+* The bot replies directly; if the answer is >1900 characters, it’s attached as `response.txt`.
 
-Upon starting, the bot will:
-- Log in to Discord.
-- Initialize the assistant, update documentation, and set up scheduled content based on the configuration.
-- Listen for messages and commands to manage assistant conversations.
+### Threaded Conversations
 
-### Commands
+* **Start a threaded Q\&A:**
 
-- **Text Commands:**
-  - `!askbull` – Initiates a stateless assistant conversation.
-  - `!askbullthread` or `!askbullprivatethread` – Starts a dedicated conversation thread for more focused interactions.
+  ```txt
+  !askbullthread How do I query account info?
+  ```
+* The bot creates (or continues) a Discord thread for multi-turn dialogue.
 
-- **Slash Commands (via Discord):**
-  - `/bullmanager update` – Updates assistant docs by re-uploading files and resetting the vector store.
-  - `/bullmanager add` – Adds new scheduled content interactively.
-  - `/bullmanager toggle` – Toggles the status (active/paused) of a scheduled content job.
-  - `/bullmanager list` – Lists all scheduled content jobs.
+### Slash Commands (BullManager)
 
----
+Use `/bullmanager` with subcommands:
 
-## Scheduled Content
+* **/bullmanager update**
+  Manually trigger docs re-upload & assistant rebuild.
 
-The project supports scheduling assistant prompts using cron-like expressions. Scheduled jobs automatically send assistant responses to the designated channel. To configure or modify these jobs, review the code in `src/scheduler.ts` and use the slash commands provided by the `bullManager` command group.
+* **/bullmanager list**
+  List all scheduled content jobs (titles, IDs, cron expressions).
 
----
+* **/bullmanager add**
+  Interactive modal to schedule new daily/recurring pushes.
 
-## Backup & Export
-
-The script `backup_and_export.sh` generates a detailed report (`repo_report.txt`) that documents the repository structure and key file contents. To run the backup:
-
-```bash
-./backup_and_export.sh
-```
+* **/bullmanager toggle**
+  Pause/resume a job by ID.
 
 ---
 
-## Related Repositories
+## Documentation Ingestion & Vector Store
 
-This project integrates documentation from several related repositories. Check out the repositories listed in `repos.config.json`:
+1. **Repos Config** (`repos.config.json`):
 
-- [nervos-docs](https://github.com/nervosnetwork/docs)
-- [ckbull-signer-docs](https://github.com/vriveraPeersyst/ckbull-developer-panel.git)
-- [ckbull-spore-nfts-docs](https://github.com/sporeprotocol/spore-docs.git)
+   ```json
+   {
+     "repos": [
+       { "name": "xrplevm-docs", "url": "https://github.com/ripple/docs.xrplevm.org.git" },
+       { "name": "xrpl-docs",    "url": "https://github.com/XRPLF/xrpl-dev-portal.git" },
+       { "name": "cosmos-docs",  "url": "https://github.com/cosmos/cosmos-sdk.git" },
+       { "name": "evmos-docs",   "url": "https://github.com/evmos/docs.git" }
+     ]
+   }
+   ```
+
+2. **Markdown → Text Conversion**
+
+   * `docsUpdater.ts` clones/pulls each repo into a temp folder.\*
+   * `convertAllMdToTxt()` finds every `.md` and writes a `.txt` next to it.
+
+3. **ManualFolder Assets**
+
+   * `convertNonTextToTxt.ts` recursively OCR’s PDFs/images, reads CSVs, outputs `.txt`.
+
+4. **Uploading & Vectorization**
+
+   * `assistantClient.uploadFile()` → OpenAI Files API
+   * `createVectorStore()` → new empty store
+   * `addFileToVectorStore()` for each file ID
+   * Persist `vectorStoreId.txt`
+
+5. **Assistant Update**
+
+   * `createOrUpdateAssistantWithVectorStore()` binds the new store to your assistant
+   * Assistant is ready to handle file-search queries
 
 ---
 
-## Development & Contributing
+## Daily Auto-Update & Logging
 
-- **TypeScript:** The project is entirely written in TypeScript.
-- **Modular Codebase:** The code is organized into distinct modules for assistant logic, file processing, scheduling, and command handling.
-- Contributions are welcome! Please open issues or submit pull requests with improvements or bug fixes.
+* A **cron** job runs at **02:00 UTC** every day.
+* It invokes `updateAssistantDocs()`, rebuilding the vector store and assistant.
+* On **success**, posts a summary to `ADMIN_CHANNEL_ID`:
+
+  ```
+  ✅ Daily docs update succeeded.
+  • Files uploaded: 42
+  • Vector Store ID: vs_abc123
+  • Assistant ID: asst_xyz789
+  ```
+* On **failure**, posts a detailed error message.
+
+---
+
+## Scheduled Content Jobs
+
+Use `/bullmanager add` to open a modal and configure:
+
+* **Title** (arbitrary descriptor)
+* **Repeat Interval** (e.g. “3 minutes”, “1 day”) → translated to cron
+* **Start Time** (UTC+1 date/time) → converted to UTC ISO
+* **Prompt** (the assistant question)
+* **General Info** (context or metadata)
+
+Jobs are stored in `scheduledContent.json` and executed via `node-cron`. Each job:
+
+* Builds a one-message conversation
+* Sends the assistant reply to the specified channel
+
+Use `/bullmanager list` & `/bullmanager toggle <id>` to manage them.
+
+---
+
+## Development
+
+* **Run locally**:
+
+  ```bash
+  npm run start
+  ```
+* **Linting & formatting**: integrate your preferred tools (ESLint, Prettier).
+* **Testing**: no tests defined—feel free to add unit/integration suites.
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feat/your-feature`)
+3. Commit your changes (`git commit -m "feat: add …"`)
+4. Push to your fork (`git push origin feat/your-feature`)
+5. Open a Pull Request describing your changes
+
+Please follow the [Conventional Commits](https://www.conventionalcommits.org/) guideline.
 
 ---
 
 ## License
 
-This project is licensed under the ISC License.
+This project is licensed under the **ISC License**. See [LICENSE](./LICENSE) for details.
 
 ---
 
-## Acknowledgements
-
-- [Discord.js](https://discord.js.org/)
-- [OpenAI API](https://openai.com/)
-- [pdf-parse](https://www.npmjs.com/package/pdf-parse)
-- [Tesseract.js](https://tesseract.projectnaptha.com/)
-
----
-
-Happy coding and enjoy building with CKBull Discord Agent!
+*Happy building on XRPL-EVM!*
