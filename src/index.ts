@@ -16,7 +16,6 @@ import {
   createVectorStore,
   addFileToVectorStore
 } from './assistantClient';
-import { askYesNo } from './cliUtils';
 import { processInput } from './messageProcessor';
 import { handleThreadCommand, handleAutoThreadMessage } from './threadHandler';
 import { bullManagerCommand } from './commands/bullManager';
@@ -30,10 +29,12 @@ import {
 import * as dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import cron from 'node-cron';
 
 dotenv.config();
 
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
+const ADMIN_CHANNEL_ID = process.env.ADMIN_CHANNEL_ID!;  // ID of the channel where update logs should go
 
 const client = new Client({
   intents: [
@@ -53,62 +54,67 @@ function gatherTextFilesWrapper(rootDir: string): string[] {
   return gatherTextFiles(rootDir);
 }
 
-async function updateAssistantDocs() {
+/**
+ * Pulls all repos, converts .md → .txt, uploads to OpenAI,
+ * rebuilds the vector store, and updates the assistant.
+ */
+async function updateAssistantDocs(): Promise<{
+  newStoreId: string;
+  assistantId: string;
+  uploadedCount: number;
+}> {
   const vectorStoreIdPath = path.join(__dirname, '..', 'vectorStoreId.txt');
-  const reupload = await askYesNo("Do you want to re-upload files to the vector store? (y/n): ");
-  let vectorStoreId: string;
-  if (reupload) {
-    console.log('Updating docs from GitHub...');
-    await updateDocsRepos();
-    const mdTxtFiles = convertAllMdToTxt();
-    console.log('Converted Markdown files:', mdTxtFiles);
-    const manualFolderPath = path.join(__dirname, '..', 'ManualFolder');
-    await convertNonTextToTxt(manualFolderPath);
-    const allTextFiles = gatherTextFilesWrapper(manualFolderPath);
-    console.log('All text files to upload:', allTextFiles);
-    const fileIds: string[] = [];
-    for (const filePath of allTextFiles) {
-      try {
-        const uploaded = await uploadFile(filePath);
-        fileIds.push(uploaded.id);
-        console.log(`Uploaded ${filePath} as file id: ${uploaded.id}`);
-      } catch (err) {
-        console.error(`Error uploading ${filePath}:`, err);
-      }
-    }
+
+  console.log('🔄 [auto] Updating docs from GitHub…');
+  await updateDocsRepos();
+
+  // 1) Convert Markdown repos to .txt
+  const mdTxtFiles = convertAllMdToTxt();
+  console.log('Converted Markdown files:', mdTxtFiles);
+
+  // 2) Convert ManualFolder assets (PDF/images/CSV) to .txt
+  const manualFolderPath = path.join(__dirname, '..', 'ManualFolder');
+  await convertNonTextToTxt(manualFolderPath);
+  const manualTxtFiles = gatherTextFilesWrapper(manualFolderPath);
+  console.log('Manual text files:', manualTxtFiles);
+
+  // 3) Combine and upload every .txt
+  const allTextFiles = [...mdTxtFiles, ...manualTxtFiles];
+  const fileIds: string[] = [];
+  for (const filePath of allTextFiles) {
     try {
-      vectorStoreId = await createVectorStore("Nervos Docs Vector Store");
-      console.log("Created vector store with ID:", vectorStoreId);
+      const { id } = await uploadFile(filePath);
+      fileIds.push(id);
+      console.log(`  • uploaded ${filePath} → ${id}`);
     } catch (err) {
-      console.error("Error creating vector store:", err);
-      return;
-    }
-    for (const fileId of fileIds) {
-      try {
-        await addFileToVectorStore(vectorStoreId, fileId);
-        console.log(`Added file id ${fileId} to vector store`);
-      } catch (err) {
-        console.error(`Error adding file id ${fileId}:`, err);
-      }
-    }
-    fs.writeFileSync(vectorStoreIdPath, vectorStoreId, 'utf-8');
-    console.log(`Vector store ID saved to ${vectorStoreIdPath}`);
-  } else {
-    if (fs.existsSync(vectorStoreIdPath)) {
-      vectorStoreId = fs.readFileSync(vectorStoreIdPath, 'utf-8').trim();
-      console.log(`Using existing vector store id: ${vectorStoreId}`);
-    } else {
-      console.log("No existing vector store id found. Proceeding with file upload.");
-      return updateAssistantDocs();
+      console.error(`Failed to upload ${filePath}:`, err);
     }
   }
-  try {
-    const assistant = await createOrUpdateAssistantWithVectorStore(vectorStoreId);
-    setAssistantId(assistant.id);
-    console.log('Assistant updated with ID:', assistant.id);
-  } catch (err) {
-    console.error('Error creating/updating Assistant:', err);
+
+  // 4) Create new vector store & add files
+  const newStoreId = await createVectorStore("Daily Docs Vector Store");
+  console.log(`Created vector store: ${newStoreId}`);
+  for (const fid of fileIds) {
+    try {
+      await addFileToVectorStore(newStoreId, fid);
+    } catch (err) {
+      console.error(`Failed to add file ${fid} to vector store:`, err);
+    }
   }
+
+  // 5) Persist the store ID
+  fs.writeFileSync(vectorStoreIdPath, newStoreId, 'utf-8');
+
+  // 6) Re-create / update the assistant
+  const assistant = await createOrUpdateAssistantWithVectorStore(newStoreId);
+  setAssistantId(assistant.id);
+  console.log(`✅ Assistant updated (id=${assistant.id})`);
+
+  return {
+    newStoreId,
+    assistantId: assistant.id,
+    uploadedCount: fileIds.length
+  };
 }
 
 async function handleStatelessCommand(message: any, args: string[]): Promise<void> {
@@ -149,7 +155,7 @@ client.on('messageCreate', async (message) => {
       return;
     }
   }
-  
+
   if (message.reference?.messageId) {
     const originalBotMsgId = message.reference.messageId;
     if (statelessConversations.has(originalBotMsgId)) {
@@ -192,7 +198,7 @@ client.on('messageCreate', async (message) => {
   if (!message.content.startsWith(prefix)) return;
   const args = message.content.slice(prefix.length).trim().split(/\s+/);
   const command = args.shift()?.toLowerCase();
-  if (!command) return;
+  if (!command) return;  
   console.log(`🔹 Processing command: "${command}" from ${message.author.tag}`);
   if (command === 'askbull') {
     await handleStatelessCommand(message, args);
@@ -254,9 +260,31 @@ client.on('interactionCreate', async (interaction: Interaction) => {
 
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user?.tag}`);
-  await updateAssistantDocs();
 
-  // Schedule all active jobs using the assistantRunner helper to send responses to the same channel where the job was created
+  // 1) Initial, non-blocking docs update at startup
+  updateAssistantDocs().catch(console.error);
+
+  // 2) Schedule a daily refresh at 02:00 UTC, with logging to admin channel
+  cron.schedule('0 2 * * *', async () => {
+    console.log('🕑 Running daily assistant-docs update…');
+    const adminChan = client.channels.cache.get(ADMIN_CHANNEL_ID) as TextChannel | undefined;
+
+    try {
+      const { newStoreId, assistantId, uploadedCount } = await updateAssistantDocs();
+      const successMsg =
+        `✅ Daily docs update succeeded.\n` +
+        `• Files uploaded: ${uploadedCount}\n` +
+        `• Vector Store ID: ${newStoreId}\n` +
+        `• Assistant ID: ${assistantId}`;
+      if (adminChan) await adminChan.send(successMsg);
+    } catch (err: any) {
+      console.error('Daily update failed:', err);
+      const errMsg = `❌ Daily docs update failed:\n\`${err.stack || err.message || err}\``;
+      if (adminChan) await adminChan.send(errMsg);
+    }
+  });
+
+  // 3) Schedule all active content jobs exactly as before
   scheduleAllActiveContent(async (content: ScheduledContent) => {
     console.log(`\n🔔 Cron triggered for: ${content.title}`);
 
@@ -281,8 +309,6 @@ client.once('ready', async () => {
       }
     }
   });
-
-  setInterval(updateAssistantDocs, 60 * 60 * 24000);
 });
 
 client.login(DISCORD_BOT_TOKEN);

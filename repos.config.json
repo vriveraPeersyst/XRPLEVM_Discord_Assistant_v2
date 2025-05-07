@@ -1,16 +1,20 @@
 {
     "repos": [
       {
-        "name": "nervos-docs",
-        "url": "https://github.com/nervosnetwork/docs"
+        "name": "xrplevm-docs",
+        "url": "https://github.com/ripple/docs.xrplevm.org.git"
       },
       {
-        "name": "ckbull-signer-docs",
-        "url": "https://github.com/vriveraPeersyst/ckbull-developer-panel.git"
+        "name": "xrpl-docs",
+        "url": "https://github.com/XRPLF/xrpl-dev-portal.git"
       },
       {
-        "name": "ckbull-spore-nfts-docs",
-        "url": "https://github.com/sporeprotocol/spore-docs.git"
+        "name": "cosmos-docs",
+        "url": "https://github.com/cosmos/cosmos-sdk.git"
+      },
+      {
+        "name": "evmos-docs",
+        "url": "https://github.com/evmos/docs.git"
       }
     ]
   }
