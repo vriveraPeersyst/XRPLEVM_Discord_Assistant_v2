@@ -29,23 +29,21 @@ export async function convertNonTextToTxt(rootDir: string): Promise<string[]> {
         // Skip if already converted
         if (fs.existsSync(txtPath)) continue;
 
-        // Safely attempt to extract text
         let extracted = '';
         try {
           extracted = await extractText(fullPath, ext);
-        } catch (err) {
-          console.error(`⚠️ extractText threw for ${fullPath}:`, err);
+        } catch {
+          // If extractText itself throws (unlikely with our catches), skip
           continue;
         }
 
-        // Write out only if there's something useful
         if (extracted.trim().length > 0) {
           try {
             fs.writeFileSync(txtPath, extracted, 'utf-8');
             newTxtFiles.push(txtPath);
             console.log(`Created text file: ${txtPath}`);
-          } catch (writeErr) {
-            console.error(`❌ Failed to write ${txtPath}:`, writeErr);
+          } catch {
+            // writing failed, but we don't want to crash
           }
         }
       }
@@ -59,17 +57,27 @@ export async function convertNonTextToTxt(rootDir: string): Promise<string[]> {
 /**
  * Reads a file buffer and returns its textual content.
  * - PDF => pdf-parse
- * - Images => Tesseract OCR (with internal try/catch)
+ * - Images => Tesseract OCR (errors swallowed)
  * - CSV => raw text
  */
 async function extractText(filePath: string, ext: string): Promise<string> {
   const lowerExt = ext.toLowerCase();
-  const fileBuffer = await fs.promises.readFile(filePath);
+  let fileBuffer: Buffer;
+
+  try {
+    fileBuffer = await fs.promises.readFile(filePath);
+  } catch {
+    return '';
+  }
 
   // PDF
   if (lowerExt === '.pdf') {
-    const pdfData = await pdfParse(fileBuffer);
-    return pdfData.text || '';
+    try {
+      const pdfData = await pdfParse(fileBuffer);
+      return pdfData.text || '';
+    } catch {
+      return '';
+    }
   }
 
   // Images => OCR
@@ -77,8 +85,7 @@ async function extractText(filePath: string, ext: string): Promise<string> {
     try {
       const { data } = await Tesseract.recognize(fileBuffer, 'eng');
       return data.text || '';
-    } catch (ocrErr) {
-      console.error(`⚠️ OCR failed for ${filePath}:`, ocrErr);
+    } catch {
       return '';
     }
   }
