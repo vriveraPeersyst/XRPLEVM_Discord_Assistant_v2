@@ -15,6 +15,10 @@
       {
         "name": "axelar-docs",
         "url": "https://github.com/axelarnetwork/axelar-docs.git"
+      },
+      {
+        "name": "bandchain-docs",
+        "url": "https://github.com/bandprotocol/bandchain-docs.git"
       }
     ]
   }
