@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { execSync } from 'child_process';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
+import { chunkText } from './chunker';
 dotenv.config();
 
 // We'll import the config file (JSON) that lists the repos:
@@ -92,14 +93,13 @@ export function convertAllMdToTxt(): string[] {
         walkDir(fullPath);
       } else if (file.toLowerCase().endsWith('.md')) {
         const mdContent = fs.readFileSync(fullPath, 'utf-8');
-        const txtContent = mdContent
-          .replace(/```[\s\S]*?```/g, '')
-          .replace(/[#>*_]/g, '')
-          .trim();
+        const txtChunks = chunkText(mdContent);
 
-        const txtPath = fullPath.replace(/\.md$/i, '.txt');
-        fs.writeFileSync(txtPath, txtContent, 'utf-8');
-        convertedFiles.push(txtPath);
+        txtChunks.forEach((chunk, index) => {
+          const txtPath = fullPath.replace(/\.md$/i, `_chunk${index}.txt`);
+          fs.writeFileSync(txtPath, chunk, 'utf-8');
+          convertedFiles.push(txtPath);
+        });
       }
     }
   };
