@@ -2,6 +2,7 @@
 import { AttachmentBuilder, TextChannel, DMChannel, NewsChannel, TextBasedChannel } from 'discord.js';
 import { runAssistantConversation } from './assistantClient';
 import { getAssistantId } from './assistantGlobals';
+import { semanticSearch, rerankSnippets } from './vectorSearch';
 
 /**
  * Runs the assistant conversation, removes any source markers,
@@ -12,8 +13,18 @@ export async function runAssistantAndSendReply(
   channel: TextBasedChannel
 ): Promise<void> {
   try {
-    // Run the assistant conversation
-    let answer = await runAssistantConversation(getAssistantId(), conversationMessages);
+    // Replace the single runAssistantConversation call in the stateless path:
+    const raw = conversationMessages.slice(-1)[0].content;
+    const hits = await semanticSearch(raw, 20, 0.75);
+    const ranks = await rerankSnippets(raw, hits, 5);
+    const context = ranks
+      .map(r => `From ${r.path}:\n${hits[r.index - 1].text}`)
+      .join('\n\n---\n\n');
+    const msgs = [
+      { role: 'system', content: `Use ONLY these contexts:\n\n${context}` },
+      { role: 'user', content: raw }
+    ];
+    let answer = await runAssistantConversation(getAssistantId(), msgs);
 
     // Remove any "[source]" references
     answer = answer.replace(/【.*?†source】/g, '');

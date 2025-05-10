@@ -1,5 +1,6 @@
 import { ThreadChannel, MessageType, AttachmentBuilder, ChannelType } from 'discord.js';
 import { processInput } from './messageProcessor';
+import { semanticSearch, rerankSnippets } from './vectorSearch';
 import { runAssistantConversation } from './assistantClient';
 import { getAssistantId } from './assistantGlobals';
 
@@ -67,7 +68,22 @@ export async function handleOngoingThreadMessage(
   }
   conversationMessages.push({ role: 'user', content: newUserPrompt });
   try {
-    let answer = await runAssistantConversation(getAssistantId(), conversationMessages);
+    // Retrieval & rerank
+    const raw = newUserPrompt;
+    const hits = await semanticSearch(raw, 20, 0.75);
+    const ranks = await rerankSnippets(raw, hits, 5);
+
+    // Assemble context
+    const context = ranks
+      .map(r => `From ${r.path}:\n${hits[r.index - 1].text}`)
+      .join('\n\n---\n\n');
+
+    // Compose with system instruction + user
+    const msgs = [
+      { role: 'system', content: `Use ONLY these contexts:\n\n${context}` },
+      { role: 'user', content: raw }
+    ];
+    let answer = await runAssistantConversation(getAssistantId(), msgs);
     answer = answer.replace(/【.*?†source】/g, '');
     if (answer.length > 1900) {
       const buffer = Buffer.from(answer, "utf-8");
