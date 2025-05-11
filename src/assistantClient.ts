@@ -2,11 +2,12 @@
 import axios from 'axios';
 import fs from 'fs';
 import FormData from 'form-data';
+import path from 'path';
 import { Message, ThreadChannel, MessageType, Attachment } from 'discord.js';
 import Tesseract from 'tesseract.js';
 import pdf from 'pdf-parse';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
+export const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
 const ASSISTANT_API_BASE = process.env.ASSISTANT_API_BASE!; // e.g. "https://api.openai.com/v1/assistants"
 const ASSISTANT_FILES_API_BASE = process.env.ASSISTANT_FILES_API_BASE!; // e.g. "https://api.openai.com/v1/files"
 
@@ -49,6 +50,17 @@ export async function uploadFile(filePath: string): Promise<any> {
     });
     return response.data;
   }, `Uploading file at ${filePath}`);
+}
+
+export async function uploadFilesBatch(filePaths: string[], batchSize = 10): Promise<any[]> {
+  const results: any[] = [];
+  for (let i = 0; i < filePaths.length; i += batchSize) {
+    const batch = filePaths.slice(i, i + batchSize);
+    const uploads = batch.map(fp => uploadFile(fp).catch(e => ({ error: e, file: fp })));
+    const batchResults = await Promise.all(uploads);
+    results.push(...batchResults);
+  }
+  return results;
 }
 
 export async function createVectorStore(storeName: string): Promise<string> {

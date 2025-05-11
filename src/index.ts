@@ -15,6 +15,7 @@ import { updateDocsRepos, convertAllMdToTxt } from './docsUpdater';
 import { convertNonTextToTxt, gatherTextFiles } from './fileProcessor';
 import {
   uploadFile,
+  uploadFilesBatch,
   createVectorStore,
   addFileToVectorStore,
   createOrUpdateAssistantWithVectorStore,
@@ -25,7 +26,7 @@ import {
   handleThreadCommand,
   handleAutoThreadMessage,
 } from './threadHandler';
-import { getAssistantId, setAssistantId } from './assistantGlobals';
+import { getAssistantId, setAssistantId, setVectorStoreId } from './assistantGlobals';
 
 dotenv.config();
 
@@ -67,21 +68,22 @@ async function updateAssistantDocs(): Promise<{
   const manualTxtFiles = gatherTextFiles(manualFolder);
   console.log('Manual text files:', manualTxtFiles);
 
-  // 3) Upload every .txt
+  // 3) Upload every .txt (now in batch)
   const allFiles = [...mdTxtFiles, ...manualTxtFiles];
+  const uploadResults = await uploadFilesBatch(allFiles, 10); // batch size 10
   const fileIds: string[] = [];
-  for (const fp of allFiles) {
-    try {
-      const { id } = await uploadFile(fp);
-      fileIds.push(id);
-      console.log(`  • uploaded ${fp} → ${id}`);
-    } catch (err) {
-      console.error(`Failed to upload ${fp}:`, err);
+  for (const result of uploadResults) {
+    if (result && result.id) {
+      fileIds.push(result.id);
+      console.log(`  • uploaded → ${result.id}`);
+    } else if (result && result.error) {
+      console.error(`Failed to upload ${result.file}:`, result.error);
     }
   }
 
   // 4) Create new vector store & add files
   const newStoreId = await createVectorStore('Daily Docs Vector Store');
+  setVectorStoreId(newStoreId);
   console.log(`Created vector store: ${newStoreId}`);
   for (const fid of fileIds) {
     await addFileToVectorStore(newStoreId, fid).catch(err =>
